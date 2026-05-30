@@ -52,17 +52,16 @@ except ImportError:
         print(f"[ERROR] Blender session terminated with error code: {err.returncode}")
         sys.exit(err.returncode)
 
-# Import custom submodules
-import cleanup
-import curve_generator
-import create_fish_components
-import species_definitions
+# Import custom package which houses modularized procedures
+import procedural_fish
 import importlib
 
-importlib.reload(cleanup)
-importlib.reload(curve_generator)
-importlib.reload(create_fish_components)
-importlib.reload(species_definitions)
+importlib.reload(procedural_fish.definitions)
+importlib.reload(procedural_fish.cleanup)
+importlib.reload(procedural_fish.shading)
+importlib.reload(procedural_fish.models)
+importlib.reload(procedural_fish.rigging)
+importlib.reload(procedural_fish)
 
 def run_procedural_fish_generation():
     print("--------------------------------------------------")
@@ -70,8 +69,8 @@ def run_procedural_fish_generation():
     print("--------------------------------------------------")
     
     # 1. Clean the current blender session of legacy temporary objects
-    cleanup.bulk_cleanup(
-        prefixes=("Fish_", "Rig_", "Material_", "Eye_"),
+    procedural_fish.bulk_cleanup(
+        prefixes=("Fish_", "Rig_"),
         protected_names=("Default_Camera", "Default_Light")
     )
     
@@ -83,7 +82,7 @@ def run_procedural_fish_generation():
     exported_catalog = {}
     
     # Iterate species and life-stages
-    for species_id, spec in species_definitions.SPECIES_TEMPLATES.items():
+    for species_id, spec in procedural_fish.SPECIES_TEMPLATES.items():
         exported_catalog[species_id] = {
             "name": spec["name"],
             "scientific_name": spec["scientific_name"],
@@ -94,25 +93,19 @@ def run_procedural_fish_generation():
             "life_stages": {}
         }
         
-        for stage_id, stage in species_definitions.LIFE_STAGES.items():
+        for stage_id, stage in procedural_fish.LIFE_STAGES.items():
             # Desired names for organization
             fish_name = f"Fish_{species_id.capitalize()}_{stage_id.capitalize()}"
-            
-            # Select anatomical profiles
-            h_profile, w_profile, off_profile = spec["profile_func"]()
             
             # Compute physical dimensions
             actual_length = spec["base_length"] * stage["scale_mod"]
             
-            # Create base procedural mesh
+            # Create base procedural mesh (internally builds and welds body, eyes, and fins!)
             print(f"Generating physical mesh structure for: {fish_name} (Length: {actual_length:.2f}m)...")
-            fish_obj = create_fish_components.create_procedural_fish_mesh(
+            fish_obj = procedural_fish.create_procedural_fish_mesh(
                 name=fish_name,
                 length=actual_length,
-                height_profile=h_profile,
-                width_profile=w_profile,
-                offset_profile=off_profile,
-                fish_type=species_id
+                species=species_id
             )
             
             # Adjust material and display colors per stage/gender
@@ -125,36 +118,21 @@ def run_procedural_fish_generation():
                 base_col[1] = min(1.0, base_col[1] * 1.3)
                 base_col[2] = min(1.0, base_col[2] * 1.3)
             elif stage_id == "fry" or stage_id == "juvenile":
-                # Babies are more translucent or camouflaged
+                # Babies are more translucent/camouflage
                 base_col[3] = 0.65  # Slight transparency
             
             # Build and apply procedurally compiled shader materials
-            create_fish_components.apply_procedural_materials(
+            procedural_fish.apply_procedural_materials(
                 obj=fish_obj,
                 base_color=tuple(base_col),
                 stripe_color=tuple(stripe_col),
                 pattern_type=spec["pattern"]
             )
             
-            # Spherically place and map eyes
-            eye_sizing = 0.05 * (actual_length**0.7) * stage["eye_scale_mod"]
-            create_fish_components.add_fish_eyes(
-                fish_obj=fish_obj,
-                snout_y_factor=0.15,
-                height=actual_length * 0.08,
-                lateral_spacing=actual_length * 0.1,
-                eye_size=eye_sizing
-            )
-            
-            # Spawn customized fins
-            create_fish_components.add_procedural_fins(
-                fish_obj=fish_obj,
-                fish_type=species_id,
-                size=actual_length * 0.8
-            )
-            
             # Rig armature skeleton over spine and create beautiful idle swim animations
-            rig_obj = create_fish_components.rig_and_animate_fish(fish_obj, num_bones=5)
+            # Now that all subcomponents are welded inside fish_obj, rigorous distance weights 
+            # will be assigned to EVERY SINGLE vertex of eyes, fins, and body!
+            rig_obj = procedural_fish.rig_and_animate_fish(fish_obj, num_bones=5)
             
             # Generate comprehensive metadata catalog entry for Unity backend integration
             extended_behaviors = list(spec["base_behaviors"]) + stage["behavior_mods"]
@@ -180,8 +158,6 @@ def run_procedural_fish_generation():
                 bpy.ops.object.select_all(action='DESELECT')
                 fish_obj.select_set(True)
                 rig_obj.select_set(True)
-                for child in fish_obj.children:
-                    child.select_set(True)
                     
                 fbx_output_path = os.path.join(export_dir, f"{fish_name}.fbx")
                 
