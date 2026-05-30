@@ -1,0 +1,502 @@
+{
+    "shark": {
+        "name": "Reef Shark",
+        "scientific_name": "Carcharhinus perezi",
+        "description": "An active marine predator often found patrolling coral reefs. Fast swimmer.",
+        "diet": "Carnivore",
+        "spawn_months": [
+            12,
+            1,
+            2,
+            6,
+            7,
+            8
+        ],
+        "spawn_locations": [
+            "Reef Wall",
+            "Deep Ocean",
+            "Open Waters"
+        ],
+        "life_stages": {
+            "fry": {
+                "asset_model_name": "Fish_Shark_Fry.fbx",
+                "length_meters": 0.33,
+                "social_cohesion_factor": 0.9,
+                "speed_scalar": 2.2,
+                "reactivity_multiplier": 2.0,
+                "behaviors": [
+                    "Patrolling",
+                    "Investigative",
+                    "Schooling",
+                    "Cautious",
+                    "High_Schooling"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "juvenile": {
+                "asset_model_name": "Fish_Shark_Juvenile.fbx",
+                "length_meters": 0.99,
+                "social_cohesion_factor": 0.6,
+                "speed_scalar": 1.4,
+                "reactivity_multiplier": 1.5,
+                "behaviors": [
+                    "Patrolling",
+                    "Investigative",
+                    "Schooling",
+                    "Playful",
+                    "Inquisitive"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_male": {
+                "asset_model_name": "Fish_Shark_Mature_male.fbx",
+                "length_meters": 2.2,
+                "social_cohesion_factor": 0.1,
+                "speed_scalar": 1.0,
+                "reactivity_multiplier": 0.7,
+                "behaviors": [
+                    "Patrolling",
+                    "Investigative",
+                    "Schooling",
+                    "Territorial",
+                    "Displaying"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_female": {
+                "asset_model_name": "Fish_Shark_Mature_female.fbx",
+                "length_meters": 2.42,
+                "social_cohesion_factor": 0.5,
+                "speed_scalar": 0.9,
+                "reactivity_multiplier": 0.8,
+                "behaviors": [
+                    "Patrolling",
+                    "Investigative",
+                    "Schooling",
+                    "Nesting",
+                    "Foraging"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            }
+        }
+    },
+    "manta": {
+        "name": "Giant Manta Ray",
+        "scientific_name": "Mobula birostris",
+        "description": "Gentle filter-feeding giants. Known for their graceful winged glides.",
+        "diet": "Planktivore",
+        "spawn_months": [
+            3,
+            4,
+            5,
+            9,
+            10,
+            11
+        ],
+        "spawn_locations": [
+            "Surface Waters",
+            "Reef Crest",
+            "Cleaning Station"
+        ],
+        "life_stages": {
+            "fry": {
+                "asset_model_name": "Fish_Manta_Fry.fbx",
+                "length_meters": 0.675,
+                "social_cohesion_factor": 0.9,
+                "speed_scalar": 2.2,
+                "reactivity_multiplier": 2.0,
+                "behaviors": [
+                    "Gliding",
+                    "Loop_De_Loop",
+                    "Curious",
+                    "Cautious",
+                    "High_Schooling"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "juvenile": {
+                "asset_model_name": "Fish_Manta_Juvenile.fbx",
+                "length_meters": 2.025,
+                "social_cohesion_factor": 0.6,
+                "speed_scalar": 1.4,
+                "reactivity_multiplier": 1.5,
+                "behaviors": [
+                    "Gliding",
+                    "Loop_De_Loop",
+                    "Curious",
+                    "Playful",
+                    "Inquisitive"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_male": {
+                "asset_model_name": "Fish_Manta_Mature_male.fbx",
+                "length_meters": 4.5,
+                "social_cohesion_factor": 0.1,
+                "speed_scalar": 1.0,
+                "reactivity_multiplier": 0.7,
+                "behaviors": [
+                    "Gliding",
+                    "Loop_De_Loop",
+                    "Curious",
+                    "Territorial",
+                    "Displaying"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_female": {
+                "asset_model_name": "Fish_Manta_Mature_female.fbx",
+                "length_meters": 4.95,
+                "social_cohesion_factor": 0.5,
+                "speed_scalar": 0.9,
+                "reactivity_multiplier": 0.8,
+                "behaviors": [
+                    "Gliding",
+                    "Loop_De_Loop",
+                    "Curious",
+                    "Nesting",
+                    "Foraging"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            }
+        }
+    },
+    "whale": {
+        "name": "Blue Whale",
+        "scientific_name": "Balaenoptera musculus",
+        "description": "The largest creature to inhabit Earth. Moves slowly and makes massive sound calls.",
+        "diet": "Planktivore",
+        "spawn_months": [
+            1,
+            2,
+            7,
+            8
+        ],
+        "spawn_locations": [
+            "Abyssal Trench",
+            "Open Waters"
+        ],
+        "life_stages": {
+            "fry": {
+                "asset_model_name": "Fish_Whale_Fry.fbx",
+                "length_meters": 2.25,
+                "social_cohesion_factor": 0.9,
+                "speed_scalar": 2.2,
+                "reactivity_multiplier": 2.0,
+                "behaviors": [
+                    "Slow_Cruise",
+                    "Deep_Dive",
+                    "Singing",
+                    "Cautious",
+                    "High_Schooling"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "juvenile": {
+                "asset_model_name": "Fish_Whale_Juvenile.fbx",
+                "length_meters": 6.75,
+                "social_cohesion_factor": 0.6,
+                "speed_scalar": 1.4,
+                "reactivity_multiplier": 1.5,
+                "behaviors": [
+                    "Slow_Cruise",
+                    "Deep_Dive",
+                    "Singing",
+                    "Playful",
+                    "Inquisitive"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_male": {
+                "asset_model_name": "Fish_Whale_Mature_male.fbx",
+                "length_meters": 15.0,
+                "social_cohesion_factor": 0.1,
+                "speed_scalar": 1.0,
+                "reactivity_multiplier": 0.7,
+                "behaviors": [
+                    "Slow_Cruise",
+                    "Deep_Dive",
+                    "Singing",
+                    "Territorial",
+                    "Displaying"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_female": {
+                "asset_model_name": "Fish_Whale_Mature_female.fbx",
+                "length_meters": 16.5,
+                "social_cohesion_factor": 0.5,
+                "speed_scalar": 0.9,
+                "reactivity_multiplier": 0.8,
+                "behaviors": [
+                    "Slow_Cruise",
+                    "Deep_Dive",
+                    "Singing",
+                    "Nesting",
+                    "Foraging"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            }
+        }
+    },
+    "cichlid": {
+        "name": "African Cichlid",
+        "scientific_name": "Metriaclima estherae",
+        "description": "Extremely vibrant, colorful family of freshwater fish found in rift lakes.",
+        "diet": "Herbivore / Algae Grater",
+        "spawn_months": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+        ],
+        "spawn_locations": [
+            "Rocky Reefs",
+            "Sandy Bays"
+        ],
+        "life_stages": {
+            "fry": {
+                "asset_model_name": "Fish_Cichlid_Fry.fbx",
+                "length_meters": 0.018,
+                "social_cohesion_factor": 0.9,
+                "speed_scalar": 2.2,
+                "reactivity_multiplier": 2.0,
+                "behaviors": [
+                    "Territorial",
+                    "Nest_Digging",
+                    "Shy",
+                    "Cautious",
+                    "High_Schooling"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "juvenile": {
+                "asset_model_name": "Fish_Cichlid_Juvenile.fbx",
+                "length_meters": 0.054,
+                "social_cohesion_factor": 0.6,
+                "speed_scalar": 1.4,
+                "reactivity_multiplier": 1.5,
+                "behaviors": [
+                    "Territorial",
+                    "Nest_Digging",
+                    "Shy",
+                    "Playful",
+                    "Inquisitive"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_male": {
+                "asset_model_name": "Fish_Cichlid_Mature_male.fbx",
+                "length_meters": 0.12,
+                "social_cohesion_factor": 0.1,
+                "speed_scalar": 1.0,
+                "reactivity_multiplier": 0.7,
+                "behaviors": [
+                    "Territorial",
+                    "Nest_Digging",
+                    "Shy",
+                    "Territorial",
+                    "Displaying"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_female": {
+                "asset_model_name": "Fish_Cichlid_Mature_female.fbx",
+                "length_meters": 0.132,
+                "social_cohesion_factor": 0.5,
+                "speed_scalar": 0.9,
+                "reactivity_multiplier": 0.8,
+                "behaviors": [
+                    "Territorial",
+                    "Nest_Digging",
+                    "Shy",
+                    "Nesting",
+                    "Foraging"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            }
+        }
+    },
+    "algae_eater": {
+        "name": "Siamese Algae Eater",
+        "scientific_name": "Crossocheilus oblongus",
+        "description": "Equipped with a sucker mouth to scrape algae off rocky riverbeds and sea-bottom structures.",
+        "diet": "Algivore / Detritivore",
+        "spawn_months": [
+            4,
+            5,
+            10,
+            11
+        ],
+        "spawn_locations": [
+            "Riverbeds",
+            "Sea Bottom",
+            "Cave Openings"
+        ],
+        "life_stages": {
+            "fry": {
+                "asset_model_name": "Fish_Algae_eater_Fry.fbx",
+                "length_meters": 0.024,
+                "social_cohesion_factor": 0.9,
+                "speed_scalar": 2.2,
+                "reactivity_multiplier": 2.0,
+                "behaviors": [
+                    "Bottom_Grazing",
+                    "Hiding",
+                    "Darting",
+                    "Cautious",
+                    "High_Schooling"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "juvenile": {
+                "asset_model_name": "Fish_Algae_eater_Juvenile.fbx",
+                "length_meters": 0.072,
+                "social_cohesion_factor": 0.6,
+                "speed_scalar": 1.4,
+                "reactivity_multiplier": 1.5,
+                "behaviors": [
+                    "Bottom_Grazing",
+                    "Hiding",
+                    "Darting",
+                    "Playful",
+                    "Inquisitive"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_male": {
+                "asset_model_name": "Fish_Algae_eater_Mature_male.fbx",
+                "length_meters": 0.16,
+                "social_cohesion_factor": 0.1,
+                "speed_scalar": 1.0,
+                "reactivity_multiplier": 0.7,
+                "behaviors": [
+                    "Bottom_Grazing",
+                    "Hiding",
+                    "Darting",
+                    "Territorial",
+                    "Displaying"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            },
+            "mature_female": {
+                "asset_model_name": "Fish_Algae_eater_Mature_female.fbx",
+                "length_meters": 0.176,
+                "social_cohesion_factor": 0.5,
+                "speed_scalar": 0.9,
+                "reactivity_multiplier": 0.8,
+                "behaviors": [
+                    "Bottom_Grazing",
+                    "Hiding",
+                    "Darting",
+                    "Nesting",
+                    "Foraging"
+                ],
+                "interactions": {
+                    "tased": "Action_Spasm_Sink",
+                    "caught": "Action_Net_Flap",
+                    "light_observed": "Action_Dazzled_Turn",
+                    "photographed": "Action_Flinch"
+                }
+            }
+        }
+    }
+}
