@@ -13,6 +13,28 @@ import omni.usd
 from omni.isaac.core.utils.prims import is_prim_path_valid, get_prim_path
 from omni.isaac.core.prims import GeometryPrim, XFormPrim
 
+# ==============================================================================
+# INTUITIVE SIMULATION CONFIGURATION
+# Adjust these values to modify spawning density, placement, ranges, and sizes!
+# ==============================================================================
+SPAWNER_CONFIG = {
+    "spawn_interval": 1.0,         # Spawn a fish every X seconds (Default: 1.0)
+    "max_fish_count": 25,          # Maximum concurrent fish allowed in the scene
+    
+    # Close-up Placement relative to robot/camera (meters)
+    "spawn_offset_x": (-3.0, 3.0), # Spawn left/right range relative to robot
+    "spawn_offset_y": (2.5, 6.5),  # Spawn depth (directly in front of camera/robot)
+    "spawn_offset_z": (-1.2, 1.2), # Spawn height relative to robot
+    
+    # Restrictive Movement bubble around robot (meters)
+    "max_drift_distance": 5.0,     # Max distance fish can travel from robot (keeps them in 5x5m sphere)
+    "flee_trigger_distance": 3.0,  # Proximity trigger distance for escape maneuvers
+    "return_steer_speed": 180.0,   # Turning speed in degrees/sec when returning inside the bubble
+    
+    # Speed bounds
+    "speed_coefficient": 0.6,      # Scaler for general swim velocity (lower speed makes filming/detecting easier)
+}
+
 class IsaacFishSimulationManager:
     """
     Manages dynamic spawning of fish USD instances, updates their translations
@@ -21,8 +43,8 @@ class IsaacFishSimulationManager:
     def __init__(self, assets_directory=None, fish_metadata=None):
         self.fish_instances = []
         self.spawn_timer = 0.0
-        self.spawn_interval = 1.5  # Spawn a fish every 1.5 seconds (configurable)
-        self.max_fish_count = 35
+        self.spawn_interval = SPAWNER_CONFIG["spawn_interval"]
+        self.max_fish_count = SPAWNER_CONFIG["max_fish_count"]
         
         # Resolve assets path
         self.assets_dir = assets_directory or r"C:\projects\ocean-sim_assets\OceanSim_assets\Models\ProceduralFish"
@@ -100,15 +122,16 @@ class IsaacFishSimulationManager:
         else:
             origin = Gf.Vec3f(0.0, 0.0, -15.0)
 
+        # Spawn right in front of the camera using offsets from our SPAWNER_CONFIG
         spawn_offset = Gf.Vec3f(
-            random.uniform(-35.0, 35.0),
-            random.uniform(-35.0, 35.0),
-            random.uniform(-15.0, 3.0)  # depth limits
+            random.uniform(SPAWNER_CONFIG["spawn_offset_x"][0], SPAWNER_CONFIG["spawn_offset_x"][1]),
+            random.uniform(SPAWNER_CONFIG["spawn_offset_y"][0], SPAWNER_CONFIG["spawn_offset_y"][1]),
+            random.uniform(SPAWNER_CONFIG["spawn_offset_z"][0], SPAWNER_CONFIG["spawn_offset_z"][1])
         )
         spawn_pos = origin + spawn_offset
         # Ensure deep water limits
-        if spawn_pos[2] > -2.0:
-            spawn_pos[2] = -5.0
+        if spawn_pos[2] > -1.0:
+            spawn_pos[2] = -2.0
 
         # Create unique prim name
         uid = random.randint(1000, 9999)
@@ -119,13 +142,16 @@ class IsaacFishSimulationManager:
         prim.GetReferences().AddReference(usd_path)
         
         # Get base movements metrics from database
-        swim_speed = 2.0
+        swim_speed = 1.5
         if species in self.metadata and "life_stages" in self.metadata[species]:
             stage_meta = self.metadata[species]["life_stages"].get(stage_id, {})
             # Speed is scaled by length and level metrics
             length = stage_meta.get("length_meters", 1.0)
             speed_mod = stage_meta.get("speed_multiplier", 1.0)
-            swim_speed = max(0.5, length * 0.18 * speed_mod)
+            swim_speed = max(0.3, length * 0.15 * speed_mod)
+            
+        # Apply speed coefficient to slow fish down for easy photography and detection
+        swim_speed *= SPAWNER_CONFIG["speed_coefficient"]
         
         # Random starting orientation (Y-forward, Z-Up)
         yaw = random.uniform(0, 2.0 * math.pi)
@@ -164,7 +190,7 @@ class IsaacFishSimulationManager:
         }
         
         self.fish_instances.append(fish_data)
-        print(f"[FishSim] Spawned {fish_name} at position {spawn_pos} with speed {swim_speed:.2f} m/s")
+        print(f"[FishSim] Spawned {fish_name} closely at position {spawn_pos} with speed {swim_speed:.2f} m/s")
 
     def update_fish_movement(self, fish, step_time: float, robot_position=None):
         """
@@ -174,45 +200,70 @@ class IsaacFishSimulationManager:
         yaw = fish["yaw"]
         speed = fish["swim_speed"]
         
-        # 1. Proximity Avoidance Steering
+        # Determine center point of the bubble
         if robot_position is not None:
-            dx = current_pos[0] - float(robot_position[0])
-            dy = current_pos[1] - float(robot_position[1])
-            dz = current_pos[2] - float(robot_position[2])
-            distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+            center_x = float(robot_position[0])
+            center_y = float(robot_position[1])
+            center_z = float(robot_position[2])
+        else:
+            center_x, center_y, center_z = 0.0, 0.0, -15.0
+
+        # Calculate distance to robot/center
+        dx = current_pos[0] - center_x
+        dy = current_pos[1] - center_y
+        dz = current_pos[2] - center_z
+        distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+        
+        # 1. Bubble Constraint Steering (Return-to-Center)
+        # Keeps fish in a strict 5x5m sphere around active camera!
+        if distance > SPAWNER_CONFIG["max_drift_distance"]:
+            # Steer the fish straight back towards the robot center
+            target_yaw = math.atan2(-dy, -dx)
             
-            # Avoidance triggers inside a 15-meter bubble
-            avoidance_trigger_radius = 16.0 if fish["radius"] > 2.0 else 10.0
-            if distance < avoidance_trigger_radius:
-                # Fish steering away from robot
-                target_yaw = math.atan2(dy, dx)
+            # Smooth yaw steering rotation towards center
+            yaw_diff = (target_yaw - yaw) % (2 * math.pi)
+            if yaw_diff > math.pi:
+                yaw_diff -= 2 * math.pi
                 
-                # Smooth yaw steering rotation towards safety angle
-                yaw_diff = (target_yaw - yaw) % (2 * math.pi)
-                if yaw_diff > math.pi:
-                    yaw_diff -= 2 * math.pi
-                
-                # Turn up to 120 degrees per second
-                max_turn = math.radians(120.0) * step_time
-                yaw += math.clamp(yaw_diff, -max_turn, max_turn)
-                
-                # Activate speed burst fleeing behavior
-                fish["swim_speed"] = fish["base_speed"] * 2.5
-                fish["escape_mode"] = True
-                fish["avoidance_timer"] = 3.0 # stay excited for 3 seconds
-            else:
-                if fish["escape_mode"]:
-                    fish["avoidance_timer"] -= step_time
-                    if fish["avoidance_timer"] <= 0:
-                        fish["escape_mode"] = False
-                        fish["swim_speed"] = fish["base_speed"]
+            max_turn = math.radians(SPAWNER_CONFIG["return_steer_speed"]) * step_time
+            yaw += max(min(yaw_diff, max_turn), -max_turn)
+            
+            # Temporarily reduce speed or keep constant to orient clearly
+            speed = fish["base_speed"]
+            fish["escape_mode"] = False
+            
+        # 2. Proximity Avoidance Steering (Fleeing when robot gets too close)
+        elif robot_position is not None and distance < SPAWNER_CONFIG["flee_trigger_distance"]:
+            # Fish steering away from robot
+            target_yaw = math.atan2(dy, dx)
+            
+            # Smooth yaw steering rotation towards safety angle
+            yaw_diff = (target_yaw - yaw) % (2 * math.pi)
+            if yaw_diff > math.pi:
+                yaw_diff -= 2 * math.pi
+            
+            max_turn = math.radians(120.0) * step_time
+            yaw += max(min(yaw_diff, max_turn), -max_turn)
+            
+            # Activate speed burst fleeing behavior
+            fish["swim_speed"] = fish["base_speed"] * 2.0
+            fish["escape_mode"] = True
+            fish["avoidance_timer"] = 2.0  # stay excited for 2 seconds
+            speed = fish["swim_speed"]
+        else:
+            if fish["escape_mode"]:
+                fish["avoidance_timer"] -= step_time
+                if fish["avoidance_timer"] <= 0:
+                    fish["escape_mode"] = False
+                    fish["swim_speed"] = fish["base_speed"]
+            speed = fish["swim_speed"]
                         
-        # Standard idle wander deviation if not fleeing
-        if not fish["escape_mode"]:
+        # Standard idle wander deviation if not fleeing and inside bounds
+        if not fish["escape_mode"] and distance <= SPAWNER_CONFIG["max_drift_distance"]:
             # Drift direction slightly to simulate random wander
             yaw += random.uniform(-0.15, 0.15) * step_time * 6.0
             
-        # 2. Translate coordinates along forward vector (Y is forward in USD export)
+        # 3. Translate coordinates along forward vector (Y is forward in USD export)
         # Note: direction components are cos(yaw) for X, sin(yaw) for Y axis
         move_dir_x = -math.sin(yaw)  # Matches orientation conversions
         move_dir_y = math.cos(yaw)
@@ -220,14 +271,16 @@ class IsaacFishSimulationManager:
         new_pos = Gf.Vec3f(
             current_pos[0] + move_dir_x * speed * step_time,
             current_pos[1] + move_dir_y * speed * step_time,
-            current_pos[2] + random.uniform(-0.1, 0.1) * speed * step_time # smooth drift depth
+            current_pos[2] + random.uniform(-0.06, 0.06) * speed * step_time # smooth drift depth
         )
         
-        # Maintain depth bounds
-        if new_pos[2] < -35.0:
-            new_pos[2] = -35.0
-        elif new_pos[2] > -2.0:
-            new_pos[2] = -2.0
+        # Maintain vertical depth boundaries relative to bubble center
+        min_depth = center_z - 3.0
+        max_depth = min(center_z + 3.0, -1.5)
+        if new_pos[2] < min_depth:
+            new_pos[2] = min_depth
+        elif new_pos[2] > max_depth:
+            new_pos[2] = max_depth
 
         # Update transforms
         fish["position"] = new_pos
@@ -236,16 +289,9 @@ class IsaacFishSimulationManager:
         fish["translate_op"].Set(new_pos)
         fish["rotate_op"].Set(Gf.Vec3f(0.0, 0.0, math.degrees(yaw)))
         
-        # 3. Handle maximum drift boundaries
-        if robot_position is not None:
-            dist_from_robot = math.sqrt(
-                (new_pos[0]-float(robot_position[0]))**2 + 
-                (new_pos[1]-float(robot_position[1]))**2 + 
-                (new_pos[2]-float(robot_position[2]))**2
-            )
-            # Prune fish that swim too far away (e.g. > 80m)
-            if dist_from_robot > 85.0:
-                return False
+        # Prune fish ONLY if they somehow break physics logic and fly super far (e.g. > 35m)
+        if distance > 35.0:
+            return False
                 
         return True
 

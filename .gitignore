@@ -11,3 +11,5 @@ unity/Assets/Resources/FishMetadata.json
 *.usda
 *.usdc
 *.blend1
+
+*devnotes*
