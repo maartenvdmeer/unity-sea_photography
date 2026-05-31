@@ -1,0 +1,13 @@
+# Ignore procedurally generated fish assets and metadata library
+blender/exported_assets/
+blender/fish_library_meta.json
+
+# If Unity assets or temporary folders are created during testing
+unity/Assets/Models/Fish/
+unity/Assets/Resources/FishMetadata.json
+*.fbx
+*.obj
+*.usd
+*.usda
+*.usdc
+*.blend1

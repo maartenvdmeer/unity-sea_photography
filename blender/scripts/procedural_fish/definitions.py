@@ -129,7 +129,7 @@ SPECIES_TEMPLATES = {
         "description": "The largest creature to inhabit Earth. Moves slowly and makes massive sound calls.",
         "base_length": 15.0,
         "base_color": (0.24, 0.32, 0.40, 1.0),  # Mottled blue-gray
-        "stripe_color": (0.42, 0.50, 0.58, 1.0),
+        "stripe_color": (0.85, 0.90, 0.95, 1.0), # High-contrast white/light spots for robotics computer vision
         "pattern": "spotted",
         "preferred_depth": "deep",
         "diet": "Planktivore",

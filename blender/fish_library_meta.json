@@ -19,7 +19,9 @@
         ],
         "life_stages": {
             "fry": {
-                "asset_model_name": "Fish_Shark_Fry.fbx",
+                "asset_model_name": "shark/Fish_Shark_Fry.fbx",
+                "asset_model_fbx": "shark/Fish_Shark_Fry.fbx",
+                "asset_model_usd": "shark/Fish_Shark_Fry.usd",
                 "length_meters": 0.33,
                 "social_cohesion_factor": 0.9,
                 "speed_scalar": 2.2,
@@ -39,7 +41,9 @@
                 }
             },
             "juvenile": {
-                "asset_model_name": "Fish_Shark_Juvenile.fbx",
+                "asset_model_name": "shark/Fish_Shark_Juvenile.fbx",
+                "asset_model_fbx": "shark/Fish_Shark_Juvenile.fbx",
+                "asset_model_usd": "shark/Fish_Shark_Juvenile.usd",
                 "length_meters": 0.99,
                 "social_cohesion_factor": 0.6,
                 "speed_scalar": 1.4,
@@ -59,7 +63,9 @@
                 }
             },
             "mature_male": {
-                "asset_model_name": "Fish_Shark_Mature_male.fbx",
+                "asset_model_name": "shark/Fish_Shark_Mature_male.fbx",
+                "asset_model_fbx": "shark/Fish_Shark_Mature_male.fbx",
+                "asset_model_usd": "shark/Fish_Shark_Mature_male.usd",
                 "length_meters": 2.2,
                 "social_cohesion_factor": 0.1,
                 "speed_scalar": 1.0,
@@ -79,7 +85,9 @@
                 }
             },
             "mature_female": {
-                "asset_model_name": "Fish_Shark_Mature_female.fbx",
+                "asset_model_name": "shark/Fish_Shark_Mature_female.fbx",
+                "asset_model_fbx": "shark/Fish_Shark_Mature_female.fbx",
+                "asset_model_usd": "shark/Fish_Shark_Mature_female.usd",
                 "length_meters": 2.42,
                 "social_cohesion_factor": 0.5,
                 "speed_scalar": 0.9,
@@ -120,7 +128,9 @@
         ],
         "life_stages": {
             "fry": {
-                "asset_model_name": "Fish_Manta_Fry.fbx",
+                "asset_model_name": "manta/Fish_Manta_Fry.fbx",
+                "asset_model_fbx": "manta/Fish_Manta_Fry.fbx",
+                "asset_model_usd": "manta/Fish_Manta_Fry.usd",
                 "length_meters": 0.675,
                 "social_cohesion_factor": 0.9,
                 "speed_scalar": 2.2,
@@ -140,7 +150,9 @@
                 }
             },
             "juvenile": {
-                "asset_model_name": "Fish_Manta_Juvenile.fbx",
+                "asset_model_name": "manta/Fish_Manta_Juvenile.fbx",
+                "asset_model_fbx": "manta/Fish_Manta_Juvenile.fbx",
+                "asset_model_usd": "manta/Fish_Manta_Juvenile.usd",
                 "length_meters": 2.025,
                 "social_cohesion_factor": 0.6,
                 "speed_scalar": 1.4,
@@ -160,7 +172,9 @@
                 }
             },
             "mature_male": {
-                "asset_model_name": "Fish_Manta_Mature_male.fbx",
+                "asset_model_name": "manta/Fish_Manta_Mature_male.fbx",
+                "asset_model_fbx": "manta/Fish_Manta_Mature_male.fbx",
+                "asset_model_usd": "manta/Fish_Manta_Mature_male.usd",
                 "length_meters": 4.5,
                 "social_cohesion_factor": 0.1,
                 "speed_scalar": 1.0,
@@ -180,7 +194,9 @@
                 }
             },
             "mature_female": {
-                "asset_model_name": "Fish_Manta_Mature_female.fbx",
+                "asset_model_name": "manta/Fish_Manta_Mature_female.fbx",
+                "asset_model_fbx": "manta/Fish_Manta_Mature_female.fbx",
+                "asset_model_usd": "manta/Fish_Manta_Mature_female.usd",
                 "length_meters": 4.95,
                 "social_cohesion_factor": 0.5,
                 "speed_scalar": 0.9,
@@ -218,7 +234,9 @@
         ],
         "life_stages": {
             "fry": {
-                "asset_model_name": "Fish_Whale_Fry.fbx",
+                "asset_model_name": "whale/Fish_Whale_Fry.fbx",
+                "asset_model_fbx": "whale/Fish_Whale_Fry.fbx",
+                "asset_model_usd": "whale/Fish_Whale_Fry.usd",
                 "length_meters": 2.25,
                 "social_cohesion_factor": 0.9,
                 "speed_scalar": 2.2,
@@ -238,7 +256,9 @@
                 }
             },
             "juvenile": {
-                "asset_model_name": "Fish_Whale_Juvenile.fbx",
+                "asset_model_name": "whale/Fish_Whale_Juvenile.fbx",
+                "asset_model_fbx": "whale/Fish_Whale_Juvenile.fbx",
+                "asset_model_usd": "whale/Fish_Whale_Juvenile.usd",
                 "length_meters": 6.75,
                 "social_cohesion_factor": 0.6,
                 "speed_scalar": 1.4,
@@ -258,7 +278,9 @@
                 }
             },
             "mature_male": {
-                "asset_model_name": "Fish_Whale_Mature_male.fbx",
+                "asset_model_name": "whale/Fish_Whale_Mature_male.fbx",
+                "asset_model_fbx": "whale/Fish_Whale_Mature_male.fbx",
+                "asset_model_usd": "whale/Fish_Whale_Mature_male.usd",
                 "length_meters": 15.0,
                 "social_cohesion_factor": 0.1,
                 "speed_scalar": 1.0,
@@ -278,7 +300,9 @@
                 }
             },
             "mature_female": {
-                "asset_model_name": "Fish_Whale_Mature_female.fbx",
+                "asset_model_name": "whale/Fish_Whale_Mature_female.fbx",
+                "asset_model_fbx": "whale/Fish_Whale_Mature_female.fbx",
+                "asset_model_usd": "whale/Fish_Whale_Mature_female.usd",
                 "length_meters": 16.5,
                 "social_cohesion_factor": 0.5,
                 "speed_scalar": 0.9,
@@ -319,7 +343,9 @@
         ],
         "life_stages": {
             "fry": {
-                "asset_model_name": "Fish_Cichlid_Fry.fbx",
+                "asset_model_name": "cichlid/Fish_Cichlid_Fry.fbx",
+                "asset_model_fbx": "cichlid/Fish_Cichlid_Fry.fbx",
+                "asset_model_usd": "cichlid/Fish_Cichlid_Fry.usd",
                 "length_meters": 0.018,
                 "social_cohesion_factor": 0.9,
                 "speed_scalar": 2.2,
@@ -339,7 +365,9 @@
                 }
             },
             "juvenile": {
-                "asset_model_name": "Fish_Cichlid_Juvenile.fbx",
+                "asset_model_name": "cichlid/Fish_Cichlid_Juvenile.fbx",
+                "asset_model_fbx": "cichlid/Fish_Cichlid_Juvenile.fbx",
+                "asset_model_usd": "cichlid/Fish_Cichlid_Juvenile.usd",
                 "length_meters": 0.054,
                 "social_cohesion_factor": 0.6,
                 "speed_scalar": 1.4,
@@ -359,7 +387,9 @@
                 }
             },
             "mature_male": {
-                "asset_model_name": "Fish_Cichlid_Mature_male.fbx",
+                "asset_model_name": "cichlid/Fish_Cichlid_Mature_male.fbx",
+                "asset_model_fbx": "cichlid/Fish_Cichlid_Mature_male.fbx",
+                "asset_model_usd": "cichlid/Fish_Cichlid_Mature_male.usd",
                 "length_meters": 0.12,
                 "social_cohesion_factor": 0.1,
                 "speed_scalar": 1.0,
@@ -379,7 +409,9 @@
                 }
             },
             "mature_female": {
-                "asset_model_name": "Fish_Cichlid_Mature_female.fbx",
+                "asset_model_name": "cichlid/Fish_Cichlid_Mature_female.fbx",
+                "asset_model_fbx": "cichlid/Fish_Cichlid_Mature_female.fbx",
+                "asset_model_usd": "cichlid/Fish_Cichlid_Mature_female.usd",
                 "length_meters": 0.132,
                 "social_cohesion_factor": 0.5,
                 "speed_scalar": 0.9,
@@ -418,7 +450,9 @@
         ],
         "life_stages": {
             "fry": {
-                "asset_model_name": "Fish_Algae_eater_Fry.fbx",
+                "asset_model_name": "algae_eater/Fish_Algae_eater_Fry.fbx",
+                "asset_model_fbx": "algae_eater/Fish_Algae_eater_Fry.fbx",
+                "asset_model_usd": "algae_eater/Fish_Algae_eater_Fry.usd",
                 "length_meters": 0.024,
                 "social_cohesion_factor": 0.9,
                 "speed_scalar": 2.2,
@@ -438,7 +472,9 @@
                 }
             },
             "juvenile": {
-                "asset_model_name": "Fish_Algae_eater_Juvenile.fbx",
+                "asset_model_name": "algae_eater/Fish_Algae_eater_Juvenile.fbx",
+                "asset_model_fbx": "algae_eater/Fish_Algae_eater_Juvenile.fbx",
+                "asset_model_usd": "algae_eater/Fish_Algae_eater_Juvenile.usd",
                 "length_meters": 0.072,
                 "social_cohesion_factor": 0.6,
                 "speed_scalar": 1.4,
@@ -458,7 +494,9 @@
                 }
             },
             "mature_male": {
-                "asset_model_name": "Fish_Algae_eater_Mature_male.fbx",
+                "asset_model_name": "algae_eater/Fish_Algae_eater_Mature_male.fbx",
+                "asset_model_fbx": "algae_eater/Fish_Algae_eater_Mature_male.fbx",
+                "asset_model_usd": "algae_eater/Fish_Algae_eater_Mature_male.usd",
                 "length_meters": 0.16,
                 "social_cohesion_factor": 0.1,
                 "speed_scalar": 1.0,
@@ -478,7 +516,9 @@
                 }
             },
             "mature_female": {
-                "asset_model_name": "Fish_Algae_eater_Mature_female.fbx",
+                "asset_model_name": "algae_eater/Fish_Algae_eater_Mature_female.fbx",
+                "asset_model_fbx": "algae_eater/Fish_Algae_eater_Mature_female.fbx",
+                "asset_model_usd": "algae_eater/Fish_Algae_eater_Mature_female.usd",
                 "length_meters": 0.176,
                 "social_cohesion_factor": 0.5,
                 "speed_scalar": 0.9,

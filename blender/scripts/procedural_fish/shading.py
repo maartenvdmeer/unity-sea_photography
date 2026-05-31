@@ -1,10 +1,97 @@
 import bpy
+import math
+import random
+from . import definitions
 
-def apply_procedural_materials(obj, base_color=(0.1, 0.4, 0.8, 1.0), stripe_color=(0.9, 0.6, 0.1, 1.0), pattern_type="striped"):
+def assign_mesh_vertex_colors(obj, base_color, stripe_color, pattern_type, species, length):
     """
-    Constructs high-fidelity procedural Blender shaders with color ramp bands or 
-    voronoi patterns to render beautiful details without any external image textures.
+    Procedurally paints vertex colors (displayColor) onto the welded low-poly mesh,
+    delivering instant high-contrast visual markings in BOTH Unity and Omniverse/Isaac Sim!
     """
+    mesh = obj.data
+    
+    # 1. Clean existing color layers
+    if hasattr(mesh, "color_attributes"):
+        while mesh.color_attributes:
+            mesh.color_attributes.remove(mesh.color_attributes[0])
+    if hasattr(mesh, "vertex_colors"):
+        while mesh.vertex_colors:
+            mesh.vertex_colors.remove(mesh.vertex_colors[0])
+            
+    # Deterministic spots generation
+    spots_centers = []
+    if pattern_type == "spotted":
+        rand = random.Random(12345)
+        num_spots = 55 if species == "whale" else 25
+        spot_radius = length * 0.024 if species == "whale" else length * 0.05
+        
+        for _ in range(num_spots):
+            t = rand.uniform(0.12, 0.88)
+            angle = rand.uniform(-math.pi * 0.72, math.pi * 0.72)
+            co = definitions.get_body_vertex(species, t, angle, length)
+            spots_centers.append((co, spot_radius))
+            
+    stripe_freq = 15.0 / length if length > 0 else 15.0
+    
+    # Map vertex colors to all vertices
+    vert_colors = []
+    for idx, vert in enumerate(mesh.vertices):
+        co = vert.co
+        color = list(base_color)
+        
+        if pattern_type == "striped":
+            val = math.sin(-co.y * stripe_freq + 2.0 * math.sin(co.x * 2.5))
+            if val > 0.05:
+                color = list(stripe_color)
+        elif pattern_type == "spotted":
+            in_spot = False
+            for spot_co, rad in spots_centers:
+                dx = co.x - spot_co[0]
+                dy = co.y - spot_co[1]
+                dz = co.z - spot_co[2]
+                dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+                if dist < rad:
+                    in_spot = True
+                    break
+            if in_spot:
+                color = list(stripe_color)
+        else: # Countershading for plain
+            # Map Z height to a smooth color blend (dark on top, light on bottom)
+            factor = 1.0 / (1.0 + math.exp(-co.z * 12.0 / length)) if length > 0 else 0.5
+            color = [base_color[s] * factor + stripe_color[s] * (1.0 - factor) for s in range(4)]
+            
+        vert_colors.append(color)
+
+    # Apply colors via Blender 3.2+ Color Attributes API
+    if hasattr(mesh, "color_attributes"):
+        try:
+            color_layer = mesh.color_attributes.new(
+                name="displayColor", # standard USD / Omniverse display color layer name
+                type='FLOAT_COLOR',
+                domain='POINT'
+            )
+            for idx, color in enumerate(vert_colors):
+                color_layer.data[idx].color = color
+            return
+        except Exception:
+            pass
+            
+    # Fallback to Loop-based vertex colors for older APIs
+    try:
+        color_layer = mesh.vertex_colors.new(name="displayColor")
+        for loop in mesh.loops:
+            color_layer.data[loop.index].color = vert_colors[loop.vertex_index]
+    except Exception as ex:
+        print(f"Vertex color painting failed: {ex}")
+
+def apply_procedural_materials(obj, base_color=(0.1, 0.4, 0.8, 1.0), stripe_color=(0.9, 0.6, 0.1, 1.0), pattern_type="striped", species="generic", length=1.0):
+    """
+    Constructs high-fidelity shaders linked to vertex color attributes,
+    ensuring beautiful markings on body models in both export formats (USD, FBX) and Blender.
+    """
+    # 1. Paint Vertex Colors directly onto the mesh for USD/FBX export compatibility
+    assign_mesh_vertex_colors(obj, base_color, stripe_color, pattern_type, species, length)
+
     mat = bpy.data.materials.new(name=f"{obj.name}_material")
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -26,65 +113,26 @@ def apply_procedural_materials(obj, base_color=(0.1, 0.4, 0.8, 1.0), stripe_colo
     if hasattr(bsdf.inputs, 'Specular'):
         bsdf.inputs['Specular'].default_value = 0.85
         
-    # Input coordinates and mapping
-    tex_coord = nodes.new(type='ShaderNodeTexCoord')
-    tex_coord.location = (-400, 0)
+    # Standard: Link Painted Vertex Colors to BSDF Base Color!
+    color_attr = None
+    for node_type in ['ShaderNodeVertexColor', 'ShaderNodeColorAttribute', 'ShaderNodeAttribute']:
+        try:
+            color_attr = nodes.new(type=node_type)
+            if node_type == 'ShaderNodeAttribute':
+                color_attr.attribute_name = "displayColor"
+            else:
+                color_attr.layer_name = "displayColor"
+            break
+        except RuntimeError:
+            continue
+            
+    if color_attr is not None:
+        color_attr.location = (150, 0)
+        links.new(color_attr.outputs['Color'], bsdf.inputs['Base Color'])
+    else:
+        # Absolute fallback if no attribute node is available
+        bsdf.inputs['Base Color'].default_value = base_color
     
-    mapping = nodes.new(type='ShaderNodeMapping')
-    mapping.location = (-200, 0)
-    links.new(tex_coord.outputs['Generated'], mapping.inputs['Vector'])
-    
-    # Color mixing node
-    mix_rgb = nodes.new(type='ShaderNodeMixRGB')
-    mix_rgb.location = (150, 0)
-    mix_rgb.inputs['Color1'].default_value = base_color
-    mix_rgb.inputs['Color2'].default_value = stripe_color
-    links.new(mix_rgb.outputs['Color'], bsdf.inputs['Base Color'])
-    
-    # Apply selected dynamic pattern mask
-    if pattern_type == "striped":
-        # Wave texture generates clean vertical stripes along Y-axis
-        wave = nodes.new(type='ShaderNodeTexWave')
-        wave.location = (0, 100)
-        wave.wave_type = 'BANDS'
-        wave.bands_direction = 'Y'
-        wave.inputs['Scale'].default_value = 14.0
-        wave.inputs['Distortion'].default_value = 1.5
-        links.new(mapping.outputs['Vector'], wave.inputs['Vector'])
-        
-        # ColorRamp to sharpen the mask boundaries
-        color_ramp = nodes.new(type='ShaderNodeValToRGB')
-        color_ramp.location = (0, -150)
-        color_ramp.color_ramp.elements[0].position = 0.38
-        color_ramp.color_ramp.elements[1].position = 0.58
-        links.new(wave.outputs['Color'], color_ramp.inputs['Fac'])
-        links.new(color_ramp.outputs['Color'], mix_rgb.inputs['Fac'])
-        
-    elif pattern_type == "spotted":
-        # Voronoi texture generates beautiful polka dot/leopard pattern spots
-        voro = nodes.new(type='ShaderNodeTexVoronoi')
-        voro.location = (0, 100)
-        voro.voronoi_dimensions = '3D'
-        voro.feature = 'F1'
-        voro.distance = 'EUCLIDEAN'
-        voro.inputs['Scale'].default_value = 18.0
-        links.new(mapping.outputs['Vector'], voro.inputs['Vector'])
-        
-        # Sharpen spots
-        math_node = nodes.new(type='ShaderNodeMath')
-        math_node.location = (0, -150)
-        math_node.operation = 'LESS_THAN'
-        math_node.inputs[1].default_value = 0.38
-        links.new(voro.outputs['Distance'], math_node.inputs[0])
-        links.new(math_node.outputs['Value'], mix_rgb.inputs['Fac'])
-        
-    else: # Countershading / plain
-        # Dark top back, light bottom belly shading (marine survival countershading)
-        sep_xyz = nodes.new(type='ShaderNodeSeparateXYZ')
-        sep_xyz.location = (0, 0)
-        links.new(mapping.outputs['Vector'], sep_xyz.inputs['Vector'])
-        links.new(sep_xyz.outputs['Z'], mix_rgb.inputs['Fac'])
-        
     # Assign compiled material to the mesh
     if obj.data.materials:
         obj.data.materials[0] = mat

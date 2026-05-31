@@ -89,3 +89,32 @@ To run the generator and output the library of rigged low-poly assets along with
    "C:\Program Files\Blender Foundation\Blender 4.5\blender.exe" -b blender/blend_files/fish_generation.blend -P blender/scripts/main.py
    ```
 3. The exported assets will be placed in the target Unity assets folders (`Assets/Models/Fish/` and `Assets/Resources/FishMetadata.json`).
+
+---
+
+## 🤖 Omniverse & Isaac Sim Integration (Robotics Simulation)
+
+For species detection simulation inside Isaac Sim using the **OceanSim** open-source user extension, we have extended the pipeline with powerful Omniverse-compatible specifications:
+
+### 1. Unified USD File Generation
+The pipeline now generates highly optimized, rig-embedded `.usd` stage models alongside standard game-engine `.fbx` formats. The USD stages include the rigged backbone/armature structure and frame-baked bone animations.
+
+### 2. High-Contrast Skin Markings via Vertex Colors (displayColor)
+Modern game engines and NVIDIA Omniverse cannot naturally parse Blender's internal shader procedural math nodes (like `Voronoi` or `Wave` textures) stored directly in files. 
+To resolve this elegantly, we developed a mathematical rasterizer that computes the organic pattern directly in Python and paints it into **Vertex Colors** (`displayColor` primvars in USD and native channels in Unity).
+This delivers:
+- **Zero rendering overhead**: No heavy UV unwrap textures needed.
+- **Flawless Omniverse Compatibility**: High-contrast markings are displayed exactly as computed on the 3D surface inside Omniverse.
+- **Whale Specialization**: Whales are generated with high-contrast, bright white/light round dots on a dark blue body, specifically engineered for camera-based robotics object detection, segmentation, and classification models.
+
+### 3. Automated Asset Sync to OceanSim
+A deployment script is provided to automate synchronization between your generator workspace, the local `OceanSim` extension data folders, and global assets path:
+
+```cmd
+python blender/scripts/deploy_isaac_sim.py
+```
+
+This synchronizes all generated USD models and metadata directly to `C:\projects\ocean-sim_assets\OceanSim_assets\Models\ProceduralFish`.
+
+### 4. Git-Ignored Assemblies
+To keep file size and storage limits low on GitHub repositories, all exported `.fbx`, `.obj`, and `.usd` files, as well as metadata catalogs, are kept locally and are protected under `.gitignore` safety configurations.

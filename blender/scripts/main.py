@@ -18,7 +18,7 @@ try:
 except ImportError:
     # If bpy is not available, we are running in a standard system python shell.
     # Re-launch this script within Blender's bundled Python context.
-    blender_exe = os.environ.get("BLENDER_EXE", r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe")
+    blender_exe = os.environ.get("BLENDER_EXE", r"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe")
     
     # Locate scene file if present
     blend_file = os.path.join(workspace_dir, "blend_files", "fish_generation.blend")
@@ -97,6 +97,10 @@ def run_procedural_fish_generation():
             # Desired names for organization
             fish_name = f"Fish_{species_id.capitalize()}_{stage_id.capitalize()}"
             
+            # Setup organic folders per fish type (species)
+            spec_export_dir = os.path.join(export_dir, species_id.lower())
+            os.makedirs(spec_export_dir, exist_ok=True)
+            
             # Compute physical dimensions
             actual_length = spec["base_length"] * stage["scale_mod"]
             
@@ -126,7 +130,9 @@ def run_procedural_fish_generation():
                 obj=fish_obj,
                 base_color=tuple(base_col),
                 stripe_color=tuple(stripe_col),
-                pattern_type=spec["pattern"]
+                pattern_type=spec["pattern"],
+                species=species_id,
+                length=actual_length
             )
             
             # Rig armature skeleton over spine and create beautiful idle swim animations
@@ -137,7 +143,9 @@ def run_procedural_fish_generation():
             # Generate comprehensive metadata catalog entry for Unity backend integration
             extended_behaviors = list(spec["base_behaviors"]) + stage["behavior_mods"]
             stage_metadata = {
-                "asset_model_name": f"{fish_name}.fbx",
+                "asset_model_name": f"{species_id.lower()}/{fish_name}.fbx",
+                "asset_model_fbx": f"{species_id.lower()}/{fish_name}.fbx",
+                "asset_model_usd": f"{species_id.lower()}/{fish_name}.usd",
                 "length_meters": round(actual_length, 3),
                 "social_cohesion_factor": stage["social_cohesion"],
                 "speed_scalar": stage["speed_factor"],
@@ -159,7 +167,7 @@ def run_procedural_fish_generation():
                 fish_obj.select_set(True)
                 rig_obj.select_set(True)
                     
-                fbx_output_path = os.path.join(export_dir, f"{fish_name}.fbx")
+                fbx_output_path = os.path.join(spec_export_dir, f"{fish_name}.fbx")
                 
                 # Check for Blender version compatibility on exporters
                 if hasattr(bpy.ops.export_scene, 'fbx'):
@@ -179,6 +187,47 @@ def run_procedural_fish_generation():
                 print(f"Successfully exported FBX/OBJ to: {fbx_output_path}")
             except Exception as ex:
                 print(f"Export warning for {fish_name}: {ex}. Running in dry-run/mock format.")
+
+            # Try to export target mesh & animation skeleton into Omniverse/Isaac Sim ready USD assets folder
+            try:
+                usd_output_path = os.path.join(spec_export_dir, f"{fish_name}.usd")
+                if hasattr(bpy.ops.wm, "usd_export"):
+                    # Select only current generated fish elements
+                    bpy.ops.object.select_all(action='DESELECT')
+                    fish_obj.select_set(True)
+                    rig_obj.select_set(True)
+                    bpy.context.view_layer.objects.active = rig_obj
+                    
+                    try:
+                        # Full-featured modern USD export
+                        bpy.ops.wm.usd_export(
+                            filepath=usd_output_path,
+                            selected_objects_only=True,
+                            export_animation=True,
+                            export_hair=False,
+                            export_materials=True,
+                            export_armatures=True
+                        )
+                    except TypeError:
+                        try:
+                            # Fallback for alternative parameter configurations
+                            bpy.ops.wm.usd_export(
+                                filepath=usd_output_path,
+                                selected_objects_only=True,
+                                export_animation=True,
+                                export_materials=True
+                            )
+                        except TypeError:
+                            # Safest fallback
+                            bpy.ops.wm.usd_export(
+                                filepath=usd_output_path,
+                                selected_objects_only=True
+                            )
+                    print(f"Successfully exported USD to: {usd_output_path}")
+                else:
+                    print("USD export is not supported in this Blender version (bpy.ops.wm.usd_export doesn't exist).")
+            except Exception as ex:
+                print(f"USD Export warning for {fish_name}: {ex}")
                 
     # 3. Export global meta config as JSON
     json_path = os.path.join(os.path.dirname(script_dir), "fish_library_meta.json")
