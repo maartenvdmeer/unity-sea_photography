@@ -90,8 +90,14 @@ def rig_and_animate_fish(fish_obj, num_bones=5):
             phase_delay = i * 0.65
             angle = amplitude * math.sin(phase - phase_delay)
             
-            pose_bone.rotation_euler = (0, 0, angle)
-            pose_bone.keyframe_insert(data_path="rotation_euler", index=2, frame=frame)
+            if "whale" in fish_obj.name.lower():
+                # Biological cetacean pitch motion (up-and-down fluke motion along X axis)
+                pose_bone.rotation_euler = (angle, 0, 0)
+                pose_bone.keyframe_insert(data_path="rotation_euler", index=0, frame=frame)
+            else:
+                # Biological fish yaw motion (side-to-side side sway along Z axis)
+                pose_bone.rotation_euler = (0, 0, angle)
+                pose_bone.keyframe_insert(data_path="rotation_euler", index=2, frame=frame)
             
     print(f"Rigging completed successfully: Rigged and keyframed {num_bones} spine bones on {fish_obj.name}")
     return arm_obj

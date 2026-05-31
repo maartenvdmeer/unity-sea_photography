@@ -67,8 +67,28 @@ def deploy_to_isaac_sim():
             dest_meta_file = os.path.join(dest_meta_dir, "fish_library_meta.json")
             shutil.copy2(meta_src, dest_meta_file)
             print(f"[SUCCESS] Successfully synced metadata database to OceanSim user extension: {dest_meta_file}")
+            
+            # Deploy fish_spawner_behavior.py script to extension's python source directories
+            spawner_src = os.path.join(script_dir, "fish_spawner_behavior.py")
+            if os.path.exists(spawner_src):
+                # Search dynamically for a 'utils' folder inside OceanSim's python directories
+                deployed_spawner = False
+                for root, dirs, files in os.walk(isaac_ext_root):
+                    if root.endswith("utils") or "oceansim" in root.lower() and "utils" in dirs:
+                        utils_path = os.path.join(root, "utils") if "utils" in dirs else root
+                        dest_spawner_file = os.path.join(utils_path, "fish_spawner_behavior.py")
+                        shutil.copy2(spawner_src, dest_spawner_file)
+                        print(f"[SUCCESS] Deployed simulation spawner behavior script to extension: {dest_spawner_file}")
+                        deployed_spawner = True
+                        break
+                
+                # Fallback: copy to the main extension root structure direct directory
+                if not deployed_spawner:
+                    dest_spawner_file = os.path.join(isaac_ext_root, "fish_spawner_behavior.py")
+                    shutil.copy2(spawner_src, dest_spawner_file)
+                    print(f"[SUCCESS] Deployed simulation spawner behavior script to extension root: {dest_spawner_file}")
         except Exception as e:
-            print(f"[ERROR] Failed to synchronize metadata database: {e}")
+            print(f"[ERROR] Failed to synchronize metadata database or spawner: {e}")
     else:
         # Fallback: copy metadata directly to the assets root so the extension can read it from there
         if deploy_assets:
@@ -76,8 +96,15 @@ def deploy_to_isaac_sim():
                 dest_meta_file = os.path.join(isaac_assets_root, "fish_library_meta.json")
                 shutil.copy2(meta_src, dest_meta_file)
                 print(f"[SUCCESS] Synced metadata database to assets root: {dest_meta_file}")
+                
+                # Also place spawner in assets root as fallback script resource
+                spawner_src = os.path.join(script_dir, "fish_spawner_behavior.py")
+                if os.path.exists(spawner_src):
+                    dest_spawner_file = os.path.join(isaac_assets_root, "fish_spawner_behavior.py")
+                    shutil.copy2(spawner_src, dest_spawner_file)
+                    print(f"[SUCCESS] Deployed simulation spawner behavior script to assets root: {dest_spawner_file}")
             except Exception as e:
-                print(f"[ERROR] Failed to copy metadata: {e}")
+                print(f"[ERROR] Failed to copy metadata or spawner: {e}")
 
     print("======================================================================")
     print("Omniverse/Isaac Sim assets deployment process complete.")

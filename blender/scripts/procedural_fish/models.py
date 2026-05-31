@@ -177,9 +177,19 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
     # ==============================================================================
     
     # 1. Place Eyes perfectly on the head skin
-    eye_t = 0.14
-    eye_angle_left = math.radians(40)
-    eye_angle_right = math.radians(-40)
+    if species == "manta":
+        eye_t = 0.06
+        eye_angle_left = math.radians(105)
+        eye_angle_right = math.radians(75)
+    elif species == "whale":
+        eye_t = 0.12
+        eye_angle_left = math.radians(100)
+        eye_angle_right = math.radians(80)
+    else: # shark, cichlid, algae_eater, generic
+        eye_t = 0.14
+        eye_angle_left = math.radians(140)
+        eye_angle_right = math.radians(40)
+    
     eye_size = 0.045 * (length**0.75) if species != "whale" else 0.12
     
     # Get exact surface coords on head
@@ -189,13 +199,13 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
     # Left Eye
     eye_l = create_lowpoly_eye(f"{name}_EyeL", size=eye_size)
     eye_l.location = co_eye_l
-    eye_l.rotation_euler = (0, 0, math.radians(25))
+    eye_l.rotation_euler = (0, 0, math.radians(65))
     components.append(eye_l)
     
     # Right Eye
     eye_r = create_lowpoly_eye(f"{name}_EyeR", size=eye_size)
     eye_r.location = co_eye_r
-    eye_r.rotation_euler = (0, 0, math.radians(-25))
+    eye_r.rotation_euler = (0, 0, math.radians(-65))
     components.append(eye_r)
     
     # 2. Place Specialized Fins based on biological class
@@ -218,8 +228,8 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
                 pec.scale.x = -1.0 # Mirror left side pectoral
             components.append(pec)
             
-        # Large vertical caudal fin
-        co_caudal = definitions.get_body_vertex(species, 0.98, 0, length)
+        # Large vertical caudal fin (centered on spinal channel)
+        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
         caudal = create_lowpoly_fin(f"{name}_Caudal", "caudal", size=length * 0.35)
         caudal.location = co_caudal
         components.append(caudal)
@@ -229,16 +239,17 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
         # Let's add cephalic horns at the head mouth edges
         horn_size = length * 0.08
         for side in [-1, 1]:
-            # Place horns at front mouth surface edges
-            co_horn = definitions.get_body_vertex(species, 0.02, math.radians(side * 35), length)
+            # Place horns at front mouth surface edges (using symmetric angle values)
+            angle = math.radians(65) if side == 1 else math.radians(115)
+            co_horn = definitions.get_body_vertex(species, 0.02, angle, length)
             horn = create_lowpoly_eye(f"{name}_Horn_{'R' if side == 1 else 'L'}", size=horn_size) # use UV sphere scaled as horn base
             horn.location = co_horn
             horn.scale = (0.5, 1.8, 0.5) # stretch into horn shapes
             horn.rotation_euler = (math.radians(90), 0, math.radians(side * 15))
             components.append(horn)
             
-        # Long thin whip tail on the caudal stalk
-        co_tail = definitions.get_body_vertex(species, 0.98, 0, length)
+        # Long thin whip tail on the caudal stalk (centered on spinal channel)
+        co_tail = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
         tail = create_lowpoly_fin(f"{name}_Whip", "pelvic", size=length * 0.8)
         tail.location = co_tail
         tail.scale = (0.1, 1.5, 0.1) # Extrude long and spindly
@@ -252,8 +263,8 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
         dorsal.scale = (0.5, 0.7, 0.2)
         components.append(dorsal)
         
-        # Wide horizontal fluke (whales swim with up/down tail sweeps!)
-        co_caudal = definitions.get_body_vertex(species, 0.98, 0, length)
+        # Wide horizontal fluke centered on spinal channel
+        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
         fluke = create_lowpoly_fin(f"{name}_Fluke", "caudal", size=length * 0.18)
         fluke.location = co_caudal
         fluke.rotation_euler = (0, math.radians(90), 0) # Rotate caudal 90 deg around Y to make horizontal fluke!
@@ -288,8 +299,8 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
                 pec.scale.x = -1.0
             components.append(pec)
             
-        # Large rounded fan-like tail
-        co_caudal = definitions.get_body_vertex(species, 0.98, 0, length)
+        # Large rounded fan-like tail (centered on spinal channel)
+        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
         caudal = create_lowpoly_fin(f"{name}_BroadTail", "caudal", size=length * 0.45)
         caudal.location = co_caudal
         caudal.scale = (0.5, 0.7, 1.2) # Make broad, vertical oval
@@ -313,8 +324,8 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
                 pec.scale.x = -1.0
             components.append(pec)
             
-        # Swept backward tail
-        co_caudal = definitions.get_body_vertex(species, 0.98, 0, length)
+        # Swept backward tail (centered on spinal channel)
+        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
         caudal = create_lowpoly_fin(f"{name}_ForkTail", "caudal", size=length * 0.32)
         caudal.location = co_caudal
         components.append(caudal)

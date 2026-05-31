@@ -199,23 +199,33 @@ def run_procedural_fish_generation():
                     bpy.context.view_layer.objects.active = rig_obj
                     
                     try:
-                        # Full-featured modern USD export
+                        # Full-featured modern USD export with Z-Up Orientation and color attributes
                         bpy.ops.wm.usd_export(
                             filepath=usd_output_path,
                             selected_objects_only=True,
                             export_animation=True,
                             export_hair=False,
                             export_materials=True,
-                            export_armatures=True
+                            export_mesh_colors=True,
+                            generate_preview_surface=True,
+                            export_armatures=True,
+                            convert_orientation=True,
+                            export_global_up_selection='Z',
+                            export_global_forward_selection='Y'
                         )
                     except TypeError:
                         try:
-                            # Fallback for alternative parameter configurations
+                            # Fallback for alternative parameter configurations (safely preserving orientation conversion and colors)
                             bpy.ops.wm.usd_export(
                                 filepath=usd_output_path,
                                 selected_objects_only=True,
                                 export_animation=True,
-                                export_materials=True
+                                export_materials=True,
+                                export_mesh_colors=True,
+                                generate_preview_surface=True,
+                                convert_orientation=True,
+                                export_global_up_selection='Z',
+                                export_global_forward_selection='Y'
                             )
                         except TypeError:
                             # Safest fallback
