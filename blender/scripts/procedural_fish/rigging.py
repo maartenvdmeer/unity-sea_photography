@@ -90,7 +90,19 @@ def rig_and_animate_fish(fish_obj, num_bones=5):
             phase_delay = i * 0.65
             angle = amplitude * math.sin(phase - phase_delay)
             
-            if "whale" in fish_obj.name.lower():
+            # Determine animation axis from the species-specific module configuration
+            animation_axis = "yaw"
+            from .definitions import SPECIES_MODULES
+            for key, mod in SPECIES_MODULES.items():
+                if key.lower() in fish_obj.name.lower():
+                    if hasattr(mod, "ANIMATION_AXIS"):
+                        animation_axis = mod.ANIMATION_AXIS
+                    break
+            # Fallback for whale if module is somehow missing
+            if "whale" in fish_obj.name.lower() and animation_axis == "yaw":
+                animation_axis = "pitch"
+                
+            if animation_axis == "pitch":
                 # Biological cetacean pitch motion (up-and-down fluke motion along X axis)
                 pose_bone.rotation_euler = (angle, 0, 0)
                 pose_bone.keyframe_insert(data_path="rotation_euler", index=0, frame=frame)

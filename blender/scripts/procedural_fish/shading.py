@@ -22,8 +22,19 @@ def assign_mesh_vertex_colors(obj, base_color, stripe_color, pattern_type, speci
     spots_centers = []
     if pattern_type == "spotted":
         rand = random.Random(12345)
+        
+        # Default spots config (with fallback to hardcoded whale values if module not present)
         num_spots = 55 if species == "whale" else 25
         spot_radius = length * 0.024 if species == "whale" else length * 0.05
+        
+        # Check custom configuration from species-specific module
+        from .definitions import SPECIES_MODULES
+        if species in SPECIES_MODULES:
+            mod = SPECIES_MODULES[species]
+            if hasattr(mod, "NUM_SPOTS"):
+                num_spots = mod.NUM_SPOTS
+            if hasattr(mod, "SPOT_RADIUS_FACTOR"):
+                spot_radius = length * mod.SPOT_RADIUS_FACTOR
         
         for _ in range(num_spots):
             t = rand.uniform(0.12, 0.88)

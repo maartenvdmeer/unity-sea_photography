@@ -173,160 +173,45 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
     components = []
     
     # ==============================================================================
-    # DYNAMIC SURFACE ATTACHMENT OF EYES & FINS
+    # DYNAMIC SURFACE ATTACHMENT OF EYES & FINS (MODULARIZED BY SPECIES)
     # ==============================================================================
+    from .definitions import SPECIES_MODULES
     
-    # 1. Place Eyes perfectly on the head skin
-    if species == "manta":
-        eye_t = 0.06
-        eye_angle_left = math.radians(105)
-        eye_angle_right = math.radians(75)
-    elif species == "whale":
-        eye_t = 0.12
-        eye_angle_left = math.radians(100)
-        eye_angle_right = math.radians(80)
-    else: # shark, cichlid, algae_eater, generic
+    if species in SPECIES_MODULES and hasattr(SPECIES_MODULES[species], "create_features"):
+        # Delegate feature creation cleanly to the dynamic species package
+        components = SPECIES_MODULES[species].create_features(
+            name, length, create_lowpoly_eye, create_lowpoly_fin
+        )
+    else:
+        # Fallback to general generic fish templates if no module is loaded
         eye_t = 0.14
         eye_angle_left = math.radians(140)
         eye_angle_right = math.radians(40)
-    
-    eye_size = 0.045 * (length**0.75) if species != "whale" else 0.12
-    
-    # Get exact surface coords on head
-    co_eye_l = definitions.get_body_vertex(species, eye_t, eye_angle_left, length)
-    co_eye_r = definitions.get_body_vertex(species, eye_t, eye_angle_right, length)
-    
-    # Left Eye
-    eye_l = create_lowpoly_eye(f"{name}_EyeL", size=eye_size)
-    eye_l.location = co_eye_l
-    eye_l.rotation_euler = (0, 0, math.radians(65))
-    components.append(eye_l)
-    
-    # Right Eye
-    eye_r = create_lowpoly_eye(f"{name}_EyeR", size=eye_size)
-    eye_r.location = co_eye_r
-    eye_r.rotation_euler = (0, 0, math.radians(-65))
-    components.append(eye_r)
-    
-    # 2. Place Specialized Fins based on biological class
-    if species == "shark":
-        # Prominent Dorsal Fin
-        co_dorsal = definitions.get_body_vertex(species, 0.44, math.pi/2, length)
-        dorsal = create_lowpoly_fin(f"{name}_Dorsal", "dorsal", size=length * 0.32)
-        dorsal.location = co_dorsal
-        dorsal.rotation_euler = (math.radians(-10), 0, 0)
-        components.append(dorsal)
+        eye_size = 0.045 * (length**0.75)
         
-        # Symmetrical Pectoral wing fins
-        for side in [-1, 1]:
-            co_pec = definitions.get_body_vertex(species, 0.30, 0 if side == 1 else math.pi, length)
-            pec = create_lowpoly_fin(f"{name}_Pec_{'R' if side == 1 else 'L'}", "pectoral", size=length * 0.28)
-            pec.location = co_pec
-            # Rotates outward and backward
-            pec.rotation_euler = (math.radians(15), math.radians(side * 40), math.radians(-side * 18))
-            if side == -1:
-                pec.scale.x = -1.0 # Mirror left side pectoral
-            components.append(pec)
-            
-        # Large vertical caudal fin (centered on spinal channel)
-        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
-        caudal = create_lowpoly_fin(f"{name}_Caudal", "caudal", size=length * 0.35)
-        caudal.location = co_caudal
-        components.append(caudal)
+        co_eye_l = definitions.get_body_vertex(species, eye_t, eye_angle_left, length)
+        co_eye_r = definitions.get_body_vertex(species, eye_t, eye_angle_right, length)
         
-    elif species == "manta":
-        # Manta rays have massive pectoral sweep wings as part of their body base mesh!
-        # Let's add cephalic horns at the head mouth edges
-        horn_size = length * 0.08
-        for side in [-1, 1]:
-            # Place horns at front mouth surface edges (using symmetric angle values)
-            angle = math.radians(65) if side == 1 else math.radians(115)
-            co_horn = definitions.get_body_vertex(species, 0.02, angle, length)
-            horn = create_lowpoly_eye(f"{name}_Horn_{'R' if side == 1 else 'L'}", size=horn_size) # use UV sphere scaled as horn base
-            horn.location = co_horn
-            horn.scale = (0.5, 1.8, 0.5) # stretch into horn shapes
-            horn.rotation_euler = (math.radians(90), 0, math.radians(side * 15))
-            components.append(horn)
-            
-        # Long thin whip tail on the caudal stalk (centered on spinal channel)
-        co_tail = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
-        tail = create_lowpoly_fin(f"{name}_Whip", "pelvic", size=length * 0.8)
-        tail.location = co_tail
-        tail.scale = (0.1, 1.5, 0.1) # Extrude long and spindly
-        components.append(tail)
+        # Left Eye
+        eye_l = create_lowpoly_eye(f"{name}_EyeL", size=eye_size)
+        eye_l.location = co_eye_l
+        eye_l.rotation_euler = (0, 0, math.radians(65))
+        components.append(eye_l)
         
-    elif species == "whale":
-        # Small dorsal ridge
-        co_dorsal = definitions.get_body_vertex(species, 0.68, math.pi/2, length)
-        dorsal = create_lowpoly_fin(f"{name}_DorsalRidge", "dorsal", size=length * 0.12)
-        dorsal.location = co_dorsal
-        dorsal.scale = (0.5, 0.7, 0.2)
-        components.append(dorsal)
+        # Right Eye
+        eye_r = create_lowpoly_eye(f"{name}_EyeR", size=eye_size)
+        eye_r.location = co_eye_r
+        eye_r.rotation_euler = (0, 0, math.radians(-65))
+        components.append(eye_r)
         
-        # Wide horizontal fluke centered on spinal channel
-        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
-        fluke = create_lowpoly_fin(f"{name}_Fluke", "caudal", size=length * 0.18)
-        fluke.location = co_caudal
-        fluke.rotation_euler = (0, math.radians(90), 0) # Rotate caudal 90 deg around Y to make horizontal fluke!
-        fluke.scale = (1.5, 1.0, 0.7)
-        components.append(fluke)
-        
-        # Pectoral side flippers
-        for side in [-1, 1]:
-            co_pec = definitions.get_body_vertex(species, 0.32, 0 if side == 1 else math.pi, length)
-            pec = create_lowpoly_fin(f"{name}_Flipper_{'R' if side == 1 else 'L'}", "pectoral", size=length * 0.16)
-            pec.location = co_pec
-            pec.rotation_euler = (math.radians(5), math.radians(side * 35), math.radians(-side * 10))
-            if side == -1:
-                pec.scale.x = -1.0
-            components.append(pec)
-            
-    elif species == "cichlid":
-        # Continuous thick dorsal fin spanning half the back
-        co_dorsal = definitions.get_body_vertex(species, 0.50, math.pi/2, length)
-        dorsal = create_lowpoly_fin(f"{name}_DorsalTall", "dorsal", size=length * 0.42)
-        dorsal.location = co_dorsal
-        dorsal.scale = (0.4, 1.4, 0.9) # stretch lengthwise
-        components.append(dorsal)
-        
-        # Symmetrical pelvic/rib fin pair
-        for side in [-1, 1]:
-            co_pec = definitions.get_body_vertex(species, 0.32, 0 if side == 1 else math.pi, length)
-            pec = create_lowpoly_fin(f"{name}_Pec_{'R' if side == 1 else 'L'}", "pectoral", size=length * 0.3)
-            pec.location = co_pec
-            pec.rotation_euler = (math.radians(10), math.radians(side * 15), math.radians(-side * 5))
-            if side == -1:
-                pec.scale.x = -1.0
-            components.append(pec)
-            
-        # Large rounded fan-like tail (centered on spinal channel)
-        co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
-        caudal = create_lowpoly_fin(f"{name}_BroadTail", "caudal", size=length * 0.45)
-        caudal.location = co_caudal
-        caudal.scale = (0.5, 0.7, 1.2) # Make broad, vertical oval
-        components.append(caudal)
-        
-    elif species == "algae_eater":
-        # Humped back dorsal
+        # Default simple fin placement (Dorsal & Caudal)
         co_dorsal = definitions.get_body_vertex(species, 0.45, math.pi/2, length)
-        dorsal = create_lowpoly_fin(f"{name}_Dorsal", "dorsal", size=length * 0.28)
+        dorsal = create_lowpoly_fin(f"{name}_Dorsal", "dorsal", size=length * 0.25)
         dorsal.location = co_dorsal
         components.append(dorsal)
         
-        # Pelvic bottom brushes for scraping bottom walls
-        for side in [-1, 1]:
-            co_pec = definitions.get_body_vertex(species, 0.30, math.radians(-40) if side == 1 else math.radians(220), length)
-            pec = create_lowpoly_fin(f"{name}_Pelvic_{'R' if side == 1 else 'L'}", "pectoral", size=length * 0.22)
-            pec.location = co_pec
-            # Angled down and slightly back
-            pec.rotation_euler = (math.radians(-20), math.radians(side * 20), math.radians(-side * 45))
-            if side == -1:
-                pec.scale.x = -1.0
-            components.append(pec)
-            
-        # Swept backward tail (centered on spinal channel)
         co_caudal = definitions.get_body_vertex(species, 0.98, math.pi/2, length)
-        caudal = create_lowpoly_fin(f"{name}_ForkTail", "caudal", size=length * 0.32)
+        caudal = create_lowpoly_fin(f"{name}_Caudal", "caudal", size=length * 0.3)
         caudal.location = co_caudal
         components.append(caudal)
         

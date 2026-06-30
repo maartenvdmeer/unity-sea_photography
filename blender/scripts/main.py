@@ -1,7 +1,6 @@
 import sys
 import os
 import json
-import subprocess
 
 # Dynamic path resolution relative to the script location
 script_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in locals() else os.getcwd()
@@ -15,42 +14,24 @@ if script_dir not in sys.path:
 # ==============================================================================
 try:
     import bpy
+    from bpy.props import EnumProperty
 except ImportError:
-    # If bpy is not available, we are running in a standard system python shell.
-    # Re-launch this script within Blender's bundled Python context.
+    # Standard python relauncher for interactive development
+    import subprocess
     blender_exe = os.environ.get("BLENDER_EXE", r"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe")
-    
-    # Locate scene file if present
     blend_file = os.path.join(workspace_dir, "blend_files", "fish_generation.blend")
     blend_file_backup = os.path.join(workspace_dir, "blend_files", "fish_generation.blend1")
     
     cmd_args = [blender_exe]
-    
-    # Headless / background check
-    if "--background" in sys.argv or "-b" in sys.argv:
-        cmd_args.append("--background")
-        
     if os.path.exists(blend_file):
         cmd_args.append(blend_file)
     elif os.path.exists(blend_file_backup):
         cmd_args.append(blend_file_backup)
-        
-    # Python script execution argument
     cmd_args.extend(["-P", __file__])
     
-    print(f"[RELAUNCH] System python detected. Orchestrating Blender subprocess execution...")
-    print(f"[RELAUNCH] Command: {' '.join(cmd_args)}")
-    
-    try:
-        result = subprocess.run(cmd_args, check=True)
-        sys.exit(result.returncode)
-    except FileNotFoundError:
-        print(f"[ERROR] Blender executable not found at: {blender_exe}")
-        print("[ERROR] Please set the 'BLENDER_EXE' environment variable to point to your Blender installation.")
-        sys.exit(1)
-    except subprocess.CalledProcessError as err:
-        print(f"[ERROR] Blender session terminated with error code: {err.returncode}")
-        sys.exit(err.returncode)
+    print(f"[RELAUNCH] System python detected. Relaunching in Blender: {' '.join(cmd_args)}")
+    result = subprocess.run(cmd_args)
+    sys.exit(result.returncode)
 
 # Import custom package which houses modularized procedures
 import procedural_fish
@@ -254,8 +235,6 @@ def run_procedural_fish_generation():
 # Allows UI-driven selection, dynamic module reloading, and live fish spawning
 # ==============================================================================
 
-from bpy.props import EnumProperty
-
 class OBJECT_OT_procedural_fish_spawn(bpy.types.Operator):
     """Reloads VS Code modules, cleans active workspace, and Spawns selected species info"""
     bl_label = "Spawn Selected Fish"
@@ -344,6 +323,58 @@ class OBJECT_OT_procedural_fish_spawn(bpy.types.Operator):
             traceback.print_exc()
             return {'CANCELLED'}
 
+class OBJECT_OT_procedural_fish_export_all(bpy.types.Operator):
+    """Generates and Exports all 20 combinations of fishes and saves metadata"""
+    bl_label = "Export All Fish (Library)"
+    bl_idname = "object.procedural_fish_export_all"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        try:
+            # Reimport modules to make sure latest code is selected
+            import importlib
+            import procedural_fish
+            importlib.reload(procedural_fish.definitions)
+            importlib.reload(procedural_fish.cleanup)
+            importlib.reload(procedural_fish.shading)
+            importlib.reload(procedural_fish.models)
+            importlib.reload(procedural_fish.rigging)
+            importlib.reload(procedural_fish)
+            
+            run_procedural_fish_generation()
+            self.report({'INFO'}, "Successfully generated and exported full library!")
+            return {'FINISHED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"Batch Export Error: {e}")
+            return {'CANCELLED'}
+
+class OBJECT_OT_procedural_fish_deploy(bpy.types.Operator):
+    """Deploys generated assets and behaviors directly to NVIDIA Isaac Sim / OceanSim"""
+    bl_label = "Deploy to Isaac Sim"
+    bl_idname = "object.procedural_fish_deploy"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        try:
+            script_path = os.path.dirname(os.path.abspath(__file__))
+            deploy_script = os.path.join(script_path, "deploy_isaac_sim.py")
+            if os.path.exists(deploy_script):
+                # Dynamically loading behavior
+                import sys
+                if script_path not in sys.path:
+                    sys.path.append(script_path)
+                import deploy_isaac_sim
+                importlib.reload(deploy_isaac_sim)
+                deploy_isaac_sim.deploy_to_isaac_sim()
+                self.report({'INFO'}, "Successfully deployed materials, metadata, and behaviors to Isaac Sim!")
+                return {'FINISHED'}
+            else:
+                self.report({'ERROR'}, "Could not locate deploy_isaac_sim.py in workspace!")
+                return {'CANCELLED'}
+        except Exception as e:
+            self.report({'ERROR'}, f"Deployment error: {e}")
+            return {'CANCELLED'}
+
 class VIEW3D_PT_procedural_fish_generator(bpy.types.Panel):
     """Creates a custom Viewport Sidebar Panel for procedural fish setup"""
     bl_label = "Procedural Fish Tool"
@@ -363,11 +394,19 @@ class VIEW3D_PT_procedural_fish_generator(bpy.types.Panel):
         
         layout.separator()
         layout.scale_y = 1.3
-        layout.operator("object.procedural_fish_spawn", text="Reload Code & Spawn", icon='FILE_REFRESH')
+        layout.operator("object.procedural_fish_spawn", text="Reload Code & Spawn Single", icon='FILE_REFRESH')
+        
+        layout.separator()
+        layout.label(text="Pipeline Operations", icon='TOOL_SETTINGS')
+        row = layout.row(align=True)
+        row.operator("object.procedural_fish_export_all", text="Export 20x Mesh Library", icon='OUTPUT')
+        row.operator("object.procedural_fish_deploy", text="Deploy to Isaac Sim", icon='EXPORT')
 
 # Addon registration
 classes = (
     OBJECT_OT_procedural_fish_spawn,
+    OBJECT_OT_procedural_fish_export_all,
+    OBJECT_OT_procedural_fish_deploy,
     VIEW3D_PT_procedural_fish_generator,
 )
 
@@ -408,17 +447,12 @@ def unregister():
     del bpy.types.Scene.fish_generator_stage
 
 def main():
-    if bpy.app.background:
-        print("[Launcher] Running in HEADLESS background mode. Initiating batch export pipeline...")
-        run_procedural_fish_generation()
-    else:
-        print("[Launcher] Running in INTERACTIVE GUI mode. Initializing viewport addon registration panels...")
-        register()
-        print("\n" + "="*80)
-        print(" PROCEDURAL FISH GENERATION INTERACTIVE ADDON ACTIVE")
-        print(" Press 'N' in the Blender 3D Viewport and open the 'Fish Generator' panel!")
-        print(" Edit parameters in VS Code, and click 'Reload Code & Spawn' to iterate live.")
-        print("="*80 + "\n")
+    register()
+    print("\n" + "="*80)
+    print(" PROCEDURAL FISH GENERATION INTERACTIVE ADDON ACTIVE")
+    print(" Press 'N' in the Blender 3D Viewport and open the 'Fish Generator' panel!")
+    print(" Edit parameters in VS Code, and click 'Reload Code & Spawn' to iterate live.")
+    print("="*80 + "\n")
 
 if __name__ == "__main__":
     main()
