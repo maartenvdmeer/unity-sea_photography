@@ -249,8 +249,176 @@ def run_procedural_fish_generation():
     print("PROCEDURAL GENERATION PIPELINE FINISHED SUCCESSFULLY")
     print("--------------------------------------------------")
 
+# ==============================================================================
+# INTERACTIVE ITERATION BLENDER ADDON
+# Allows UI-driven selection, dynamic module reloading, and live fish spawning
+# ==============================================================================
+
+from bpy.props import EnumProperty
+
+class OBJECT_OT_procedural_fish_spawn(bpy.types.Operator):
+    """Reloads VS Code modules, cleans active workspace, and Spawns selected species info"""
+    bl_label = "Spawn Selected Fish"
+    bl_idname = "object.procedural_fish_spawn"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        species_id = scene.fish_generator_species
+        stage_id = scene.fish_generator_stage
+        
+        # 1. Reload Python modules dynamically live from workspace
+        try:
+            import importlib
+            import procedural_fish
+            importlib.reload(procedural_fish.definitions)
+            importlib.reload(procedural_fish.cleanup)
+            importlib.reload(procedural_fish.shading)
+            importlib.reload(procedural_fish.models)
+            importlib.reload(procedural_fish.rigging)
+            importlib.reload(procedural_fish)
+            self.report({'INFO'}, "Successfully reloaded all procedural_fish workspace modules!")
+        except Exception as e:
+            self.report({'ERROR'}, f"Failed to reload workspace modules: {e}")
+            return {'CANCELLED'}
+            
+        # 2. Cleanup existing procedurally spawned entities
+        try:
+            procedural_fish.bulk_cleanup(
+                prefixes=("Fish_", "Rig_"),
+                protected_names=("Default_Camera", "Default_Light")
+            )
+        except Exception as e:
+            self.report({'WARNING'}, f"Workspace cleanup warning: {e}")
+            
+        # 3. Create the selected species variant
+        try:
+            spec = procedural_fish.SPECIES_TEMPLATES[species_id]
+            stage = procedural_fish.LIFE_STAGES[stage_id]
+            
+            fish_name = f"Fish_{species_id.capitalize()}_{stage_id.capitalize()}"
+            actual_length = spec["base_length"] * stage["scale_mod"]
+            
+            # Create standard procedural mesh
+            fish_obj = procedural_fish.create_procedural_fish_mesh(
+                name=fish_name,
+                length=actual_length,
+                species=species_id
+            )
+            
+            # Morph color variations
+            base_col = list(spec["base_color"])
+            stripe_col = list(spec["stripe_color"])
+            if stage_id == "mature_male":
+                base_col[0] = min(1.0, base_col[0] * 1.3)
+                base_col[1] = min(1.0, base_col[1] * 1.3)
+                base_col[2] = min(1.0, base_col[2] * 1.3)
+            elif stage_id == "fry" or stage_id == "juvenile":
+                base_col[3] = 0.65
+                
+            # Build and apply procedurally compiled shader materials
+            procedural_fish.apply_procedural_materials(
+                obj=fish_obj,
+                base_color=tuple(base_col),
+                stripe_color=tuple(stripe_col),
+                pattern_type=spec["pattern"],
+                species=species_id,
+                length=actual_length
+            )
+            
+            # Rig skeleton bone nodes and bind armature
+            rig_obj = procedural_fish.rig_and_animate_fish(fish_obj, num_bones=5)
+            
+            # Select and focus on the generated armature & mesh
+            bpy.ops.object.select_all(action='DESELECT')
+            fish_obj.select_set(True)
+            rig_obj.select_set(True)
+            context.view_layer.objects.active = rig_obj
+            
+            self.report({'INFO'}, f"Spawned {fish_name} successfully!")
+            return {'FINISHED'}
+            
+        except Exception as e:
+            self.report({'ERROR'}, f"Spawning system error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'CANCELLED'}
+
+class VIEW3D_PT_procedural_fish_generator(bpy.types.Panel):
+    """Creates a custom Viewport Sidebar Panel for procedural fish setup"""
+    bl_label = "Procedural Fish Tool"
+    bl_idname = "VIEW3D_PT_procedural_fish_generator"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Fish Generator'
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        
+        layout.label(text="Iteration Dashboard", icon='INFO')
+        box = layout.box()
+        box.prop(scene, "fish_generator_species", text="Species")
+        box.prop(scene, "fish_generator_stage", text="Stage")
+        
+        layout.separator()
+        layout.scale_y = 1.3
+        layout.operator("object.procedural_fish_spawn", text="Reload Code & Spawn", icon='FILE_REFRESH')
+
+# Addon registration
+classes = (
+    OBJECT_OT_procedural_fish_spawn,
+    VIEW3D_PT_procedural_fish_generator,
+)
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+        
+    bpy.types.Scene.fish_generator_species = EnumProperty(
+        name="Species",
+        description="Procedural species template configurations",
+        items=[
+            ("shark", "Reef Shark", "Swept dorsal and ventral, large tail, high velocity skeleton model"),
+            ("manta", "Manta Ray", "Flat wing-like geometries, side wing sweep meshes"),
+            ("whale", "Whale Cetacean", "Gigantic round streamlined structures, top blowhole layout"),
+            ("cichlid", "Cichlid", "Compressed tall oval depth profile"),
+            ("algae_eater", "Algae Eater", "Flat belly structures and suction profile shape")
+        ],
+        default="shark"
+    )
+    
+    bpy.types.Scene.fish_generator_stage = EnumProperty(
+        name="Life Stage",
+        description="Age and gender morphology values",
+        items=[
+            ("fry", "Fry (Baby)", "Oversized eye-scales with translucent shaders"),
+            ("juvenile", "Juvenile", "Translucent growing proportion modifier sizes"),
+            ("mature_male", "Mature Male", "High vivid/contrast display pattern pigments"),
+            ("mature_female", "Mature Female", "Camouflaged wide spawning geometries")
+        ],
+        default="mature_male"
+    )
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+        
+    del bpy.types.Scene.fish_generator_species
+    del bpy.types.Scene.fish_generator_stage
+
 def main():
-    run_procedural_fish_generation()
+    if bpy.app.background:
+        print("[Launcher] Running in HEADLESS background mode. Initiating batch export pipeline...")
+        run_procedural_fish_generation()
+    else:
+        print("[Launcher] Running in INTERACTIVE GUI mode. Initializing viewport addon registration panels...")
+        register()
+        print("\n" + "="*80)
+        print(" PROCEDURAL FISH GENERATION INTERACTIVE ADDON ACTIVE")
+        print(" Press 'N' in the Blender 3D Viewport and open the 'Fish Generator' panel!")
+        print(" Edit parameters in VS Code, and click 'Reload Code & Spawn' to iterate live.")
+        print("="*80 + "\n")
 
 if __name__ == "__main__":
     main()

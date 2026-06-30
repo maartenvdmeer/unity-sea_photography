@@ -8,18 +8,26 @@ This repository hosts the procedural generation, modeling, and simulation behavi
 
 Run these commands using Git Bash (or your preferred terminal) from the repository root:
 
-### 1. Generating Procedural Fish (Blender 5.1)
-The master orchestration script automatically detects standard Blender installations. To generate/regenerate the 20 procedural fish types (including different ages, genders, and spot markings):
+### 1. Interactive Mesh & Code Iteration (Blender 5.1 GUI Panel Addon)
+If you want to live-edit parameters/geometry equations in VS Code and inspect them inside Blender instantly:
+
+1. Launch the interactive workspace inside Blender:
+   ```bash
+   python blender/scripts/main.py
+   ```
+2. In the Blender 3D Viewport window, press `N` on your keyboard to toggle the side property shelf, and select the **Fish Generator** tab.
+3. Select your desired **Species** & **Life Stage** from the dropdowns.
+4. Open the physics generation files (e.g. [blender/scripts/procedural_fish/definitions.py](blender/scripts/procedural_fish/definitions.py) or [blender/scripts/procedural_fish/models.py](blender/scripts/procedural_fish/models.py)) in VS Code and save your edits.
+5. In Blender, click **Reload Code & Spawn**. The addon automatically re-imports your modified python files, cleans up previous geometries, and spawns the fresh fish!
+
+### 2. Standard Batch Generation (Headless)
+To generate and export the full library of 20 unified `.fbx` and `.usd` models and compiled catalog JSON structures:
 
 ```bash
-# Run headless (in background) - Recommended
 python blender/scripts/main.py --background
-
-# Run with Blender GUI open
-python blender/scripts/main.py
 ```
 
-### 2. Deploying Models & Behaviors to NVIDIA Isaac Sim
+### 3. Deploying Models & Behaviors to NVIDIA Isaac Sim
 Once meshes and textures/vertex colors are built, sync them directly to your Isaac Sim (OceanSim extension) asset and Python folders:
 
 ```bash
