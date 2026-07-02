@@ -109,7 +109,7 @@ def create_lowpoly_eye(name, size=0.04):
         
     return obj
 
-def create_procedural_fish_mesh(name, length=1.0, species="generic"):
+def create_procedural_fish_mesh(name, length=1.0, species="generic", join_components=True):
     """
     Creates a complete, realistic, beautifully integrated low-poly fish mesh.
     Computes body cross-sections and maps eyes and fins flawlessly.
@@ -175,10 +175,131 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
     # ==============================================================================
     # DYNAMIC SURFACE ATTACHMENT OF EYES & FINS (MODULARIZED BY SPECIES)
     # ==============================================================================
-    from .definitions import SPECIES_MODULES
+    from .definitions import SPECIES_MODULES, SPECIES_TEMPLATES
     
-    if species in SPECIES_MODULES and hasattr(SPECIES_MODULES[species], "create_features"):
-        # Delegate feature creation cleanly to the dynamic species package
+    spec_template = SPECIES_TEMPLATES.get(species, {})
+    features_list = spec_template.get("features", [])
+    
+    if species in SPECIES_MODULES and hasattr(SPECIES_MODULES[species], "get_body_vertex"):
+        species_vertex_fn = SPECIES_MODULES[species].get_body_vertex
+    else:
+        # Default fallback vertex function
+        species_vertex_fn = lambda t, angle, length: definitions.get_body_vertex(species, t, angle, length)
+        
+    if features_list:
+        # Deploy clean declarative component instancer!
+        for feat in features_list:
+            feat_type = feat.get("type", "fin")
+            
+            if feat_type == "eyes":
+                t = feat.get("t", 0.14)
+                # Parse degree or radian angle
+                if "angle_deg" in feat:
+                    ang_rad = math.radians(feat["angle_deg"])
+                else:
+                    ang_rad = feat.get("angle", math.radians(40))
+                    
+                size = feat.get("size_factor", 0.045) * (length**0.75)
+                
+                # Symmetrical Left & Right Eye placement
+                for side, direction in [("L", 1), ("R", -1)]:
+                    # Left side eye mirrors angle across plane
+                    actual_angle = (math.pi - ang_rad) if side == "L" else ang_rad
+                    co = species_vertex_fn(t, actual_angle, length)
+                    
+                    eye_obj = create_lowpoly_eye(f"{name}_Eye{side}", size=size)
+                    eye_obj.location = co
+                    eye_obj.rotation_euler = (0, 0, math.radians(65 * direction))
+                    components.append(eye_obj)
+                    
+            elif feat_type == "fin":
+                fin_type = feat.get("fin_type", "dorsal")
+                t = feat.get("t", 0.5)
+                angle = feat.get("angle", math.pi / 2)
+                size = length * feat.get("scale", 0.25)
+                
+                co = species_vertex_fn(t, angle, length)
+                fin_obj = create_lowpoly_fin(f"{name}_{fin_type.capitalize()}", fin_type, size=size)
+                fin_obj.location = co
+                if "rotation_euler" in feat:
+                    fin_obj.rotation_euler = [math.radians(v) for v in feat["rotation_euler"]]
+                if "scale_xyz" in feat:
+                    fin_obj.scale = feat["scale_xyz"]
+                components.append(fin_obj)
+                
+            elif feat_type == "paired_fins":
+                fin_type = feat.get("fin_type", "pectoral")
+                t = feat.get("t", 0.3)
+                size = length * feat.get("scale", 0.25)
+                
+                # Places paired fins symmetrically
+                for side, direction in [("R", 1), ("L", -1)]:
+                    if "angle_deg" in feat:
+                        ang_rad = math.radians(feat["angle_deg"])
+                    else:
+                        ang_rad = 0 if side == "R" else math.pi
+                        
+                    co = species_vertex_fn(t, ang_rad, length)
+                    
+                    fin_name = f"{name}_{fin_type.capitalize()}_{side}"
+                    fin_obj = create_lowpoly_fin(fin_name, fin_type, size=size)
+                    fin_obj.location = co
+                    
+                    if "rotation_euler" in feat:
+                        rot = feat["rotation_euler"]
+                        # Adjust rotation symmetry
+                        fin_obj.rotation_euler = (
+                            math.radians(rot[0]),
+                            math.radians(direction * rot[1]),
+                            math.radians(-direction * rot[2])
+                        )
+                    else:
+                        # Fallback default pectoral rotation
+                        fin_obj.rotation_euler = (math.radians(10), math.radians(direction * 15), math.radians(-direction * 5))
+                        
+                    if side == "L":
+                        fin_obj.scale.x = -1.0
+                        
+                    if "scale_xyz" in feat:
+                        fin_obj.scale = (direction * feat["scale_xyz"][0], feat["scale_xyz"][1], feat["scale_xyz"][2])
+                    components.append(fin_obj)
+                    
+            elif feat_type == "custom":
+                # Specialized one-offs (cephalic horns or whip tails)
+                custom_type = feat.get("name")
+                t = feat.get("t", 0.05)
+                size = length * feat.get("scale", 0.1)
+                
+                if custom_type == "cephalic_horns":
+                    for side, direction in [("R", 1), ("L", -1)]:
+                        angle = math.radians(65) if side == "R" else math.radians(115)
+                        co = species_vertex_fn(t, angle, length)
+                        horn = create_lowpoly_eye(f"{name}_Horn_{side}", size=size)
+                        horn.location = co
+                        horn.scale = feat.get("scale_xyz", (0.5, 1.8, 0.5))
+                        horn.rotation_euler = (math.radians(90), 0, math.radians(direction * 15))
+                        components.append(horn)
+                        
+                elif custom_type == "whip_tail":
+                    co = species_vertex_fn(t, math.pi/2, length)
+                    tail = create_lowpoly_fin(f"{name}_Whip", "pelvic", size=size)
+                    tail.location = co
+                    tail.scale = feat.get("scale_xyz", (0.1, 1.5, 0.1))
+                    components.append(tail)
+                    
+                elif custom_type == "pelvic_brushes":
+                    for side, direction in [("R", 1), ("L", -1)]:
+                        angle = math.radians(-40) if side == "R" else math.radians(220)
+                        co = species_vertex_fn(t, angle, length)
+                        pec = create_lowpoly_fin(f"{name}_Pelvic_{side}", "pectoral", size=size)
+                        pec.location = co
+                        pec.rotation_euler = (math.radians(-20), math.radians(direction * 20), math.radians(-direction * 45))
+                        if side == "L":
+                            pec.scale.x = -1.0
+                        components.append(pec)
+                        
+    elif species in SPECIES_MODULES and hasattr(SPECIES_MODULES[species], "create_features"):
+        # Legacy callback fallback to preserve complete backward compatibility
         components = SPECIES_MODULES[species].create_features(
             name, length, create_lowpoly_eye, create_lowpoly_fin
         )
@@ -218,32 +339,36 @@ def create_procedural_fish_mesh(name, length=1.0, species="generic"):
     # ==============================================================================
     # THE CRITICAL WORKFLOW FIX: UNIFIED MESH JOIN & DOUBLE WELDING
     # ==============================================================================
-    # Deselect all, then select main body and all procedural components
-    bpy.ops.object.select_all(action='DESELECT')
-    body_obj.select_set(True)
-    for comp in components:
-        comp.select_set(True)
+    if join_components:
+        # Deselect all, then select main body and all procedural components
+        bpy.ops.object.select_all(action='DESELECT')
+        body_obj.select_set(True)
+        for comp in components:
+            comp.select_set(True)
+            
+        # Set main body as the master active context object
+        bpy.context.view_layer.objects.active = body_obj
         
-    # Set main body as the master active context object
-    bpy.context.view_layer.objects.active = body_obj
-    
-    # Weld and Join separate elements into 1 single solid master mesh!
-    bpy.ops.object.join()
-    
-    # Run absolute vertices double welding inside BMesh to complete watertight skin joins
-    bm = bmesh.new()
-    bm.from_mesh(body_obj.data)
-    # Remove overlapping double vertices (threshold matches joint spacing)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.005)
-    bm.to_mesh(body_obj.data)
-    bm.free()
-    
-    # Recalculate smooth normals for clean low-poly surface shading
-    body_obj.data.update()
-    
-    # Add Subdivision level LOD modifier (deactivated for gaming, enabled for rendering)
-    subd = body_obj.modifiers.new(name="Subdivision", type='SUBSURF')
-    subd.levels = 1
-    subd.render_levels = 2
-    
-    return body_obj
+        # Weld and Join separate elements into 1 single solid master mesh!
+        bpy.ops.object.join()
+        
+        # Run absolute vertices double welding inside BMesh to complete watertight skin joins
+        bm = bmesh.new()
+        bm.from_mesh(body_obj.data)
+        # Remove overlapping double vertices (threshold matches joint spacing)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.005)
+        bm.to_mesh(body_obj.data)
+        bm.free()
+        
+        # Recalculate smooth normals for clean low-poly surface shading
+        body_obj.data.update()
+        
+        # Add Subdivision level LOD modifier (deactivated for gaming, enabled for rendering)
+        subd = body_obj.modifiers.new(name="Subdivision", type='SUBSURF')
+        subd.levels = 1
+        subd.render_levels = 2
+        
+        return body_obj
+    else:
+        # Return the separate main body. Features are kept as independent objects.
+        return body_obj

@@ -14,7 +14,7 @@ if script_dir not in sys.path:
 # ==============================================================================
 try:
     import bpy
-    from bpy.props import EnumProperty
+    from bpy.props import EnumProperty, BoolProperty
 except ImportError:
     # Standard python relauncher for interactive development
     import subprocess
@@ -279,10 +279,12 @@ class OBJECT_OT_procedural_fish_spawn(bpy.types.Operator):
             actual_length = spec["base_length"] * stage["scale_mod"]
             
             # Create standard procedural mesh
+            join_components = scene.fish_generator_join_components
             fish_obj = procedural_fish.create_procedural_fish_mesh(
                 name=fish_name,
                 length=actual_length,
-                species=species_id
+                species=species_id,
+                join_components=join_components
             )
             
             # Morph color variations
@@ -391,6 +393,7 @@ class VIEW3D_PT_procedural_fish_generator(bpy.types.Panel):
         box = layout.box()
         box.prop(scene, "fish_generator_species", text="Species")
         box.prop(scene, "fish_generator_stage", text="Stage")
+        box.prop(scene, "fish_generator_join_components", text="Join Components")
         
         layout.separator()
         layout.scale_y = 1.3
@@ -437,6 +440,12 @@ def register():
             ("mature_female", "Mature Female", "Camouflaged wide spawning geometries")
         ],
         default="mature_male"
+    )
+    
+    bpy.types.Scene.fish_generator_join_components = BoolProperty(
+        name="Join Components",
+        description="Whether to join eyes, fins, and body into a single mesh (True) or keep them separate (False)",
+        default=True
     )
 
 def unregister():

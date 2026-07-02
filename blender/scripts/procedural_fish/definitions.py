@@ -18,25 +18,24 @@ if blender_dir not in sys.path:
 SPECIES_TEMPLATES = {}
 SPECIES_MODULES = {}
 
-# List entries in species folder and dynamically load as modules
+# List entries in species folder and dynamically load as flat modules
 if os.path.exists(species_dir):
     for entry in os.listdir(species_dir):
-        entry_path = os.path.join(species_dir, entry)
-        if os.path.isdir(entry_path) and not entry.startswith("__"):
-            init_file = os.path.join(entry_path, "__init__.py")
-            if os.path.exists(init_file):
-                try:
-                    module_name = f"species.{entry}"
-                    if module_name in sys.modules:
-                        mod = importlib.reload(sys.modules[module_name])
-                    else:
-                        mod = importlib.import_module(module_name)
-                    
-                    SPECIES_MODULES[entry] = mod
-                    if hasattr(mod, "TEMPLATE"):
-                        SPECIES_TEMPLATES[entry] = mod.TEMPLATE
-                except Exception as e:
-                    print(f"Failed to dynamically load species module {entry}: {e}")
+        # We look for files ending in .py, excluding __init__.py
+        if entry.endswith(".py") and not entry.startswith("__"):
+            species_id = entry[:-3] # Remove ".py" extension
+            try:
+                module_name = f"species.{species_id}"
+                if module_name in sys.modules:
+                    mod = importlib.reload(sys.modules[module_name])
+                else:
+                    mod = importlib.import_module(module_name)
+                
+                SPECIES_MODULES[species_id] = mod
+                if hasattr(mod, "TEMPLATE"):
+                    SPECIES_TEMPLATES[species_id] = mod.TEMPLATE
+            except Exception as e:
+                print(f"Failed to dynamically load species flat module {species_id}: {e}")
 
 # ==============================================================================
 # SPECIES ANATOMICAL SURFACE FUNCTIONS
